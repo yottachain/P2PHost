@@ -2,7 +2,8 @@ package host_test
 
 import (
 	"testing"
-	"yottachain/ytfs-p2p-host"
+
+	"github.com/yottachain/P2PHost"
 )
 
 var localMa = []string{"/ip4/0.0.0.0/tcp/9000"}
@@ -10,7 +11,7 @@ var localMa2 = []string{"/ip4/0.0.0.0/tcp/9001"}
 var localMa3 = []string{"/ip4/0.0.0.0/tcp/9002"}
 
 func TestNewHost(t *testing.T) {
-	host, err := host.NewHost(localMa, nil)
+	host, err := host.NewHost(localMa2, nil)
 	if err != nil {
 		t.Fatalf("new host error: %s", err)
 	} else {
@@ -22,8 +23,8 @@ func TestNewHost(t *testing.T) {
 func TestSendMessage(t *testing.T) {
 	// 创建host1模拟接受消息
 	h1, err := host.NewHost(localMa, nil)
-	h1.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
-		if string(msg) == "ping" {
+	h1.RegisterHandler("ping", func(msg host.Msg) []byte {
+		if string(msg.MsgType) == "ping" {
 			return []byte("pong")
 		} else {
 			return []byte("error")
@@ -67,10 +68,10 @@ func TestRealy(t *testing.T) {
 	h1.Connect(h2.ID(), h2.Addrs())
 	h3.Connect(h2.ID(), h2.Addrs())
 
-	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID()})
+	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID().Pretty()})
 
-	h3.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
-		if string(msg) == "ping" {
+	h3.RegisterHandler("ping", func(msg host.Msg) []byte {
+		if string(msg.MsgType) == "ping" {
 			return []byte("pong")
 		} else {
 			return nil

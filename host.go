@@ -28,6 +28,7 @@ type PrivKey ci.PrivKey
 type PubKey ci.PubKey
 
 // Host 接口
+// [update] 所有id string 替换成peer.ID
 type Host interface {
 	ID() peer.ID
 	Addrs() []string
@@ -37,14 +38,14 @@ type Host interface {
 	// 连接节点
 	// id 节点ID
 	// addrs 节点地址
-	Connect(id string, addrs []string) error
+	Connect(id peer.ID, addrs []string) error
 	// 断开来接
-	DisConnect(id string) error
+	DisConnect(id peer.ID) error
 	// 发送消息
 	// id 发送目标节点id
 	// msgType 消息类型
-	SendMsg(id string, msgType string, msg MsgData) ([]byte, error)
-	NewStream(id string, msgType string) (inet.Stream, error)
+	SendMsg(id peer.ID, msgType string, msg MsgData) ([]byte, error)
+	NewStream(id peer.ID, msgType string) (inet.Stream, error)
 	// 注册回调函数
 	// msgType 消息类型
 	// MsgHandlerFunc 消息处理函数
@@ -91,30 +92,22 @@ func (h hst) Peerstore() peerstore.Peerstore {
 }
 
 // Connect 连接节点
-func (h hst) Connect(id string, addrs []string) error {
+func (h hst) Connect(id peer.ID, addrs []string) error {
 	maddrs, err := util.StringListToMaddrs(addrs)
 	if err != nil {
 		return err
 	}
-	pid, err := peer.IDB58Decode(id)
-	if err != nil {
-		return err
-	}
 	info := peerstore.PeerInfo{
-		pid,
-		maddrs,
+		ID:    id,
+		Addrs: maddrs,
 	}
 	h.lhost.Connect(context.Background(), info)
 	return nil
 }
 
 // DisConnect 断开连接
-func (h hst) DisConnect(id string) error {
-	pid, err := peer.IDB58Decode(id)
-	if err != nil {
-		return err
-	}
-	h.lhost.Peerstore().ClearAddrs(pid)
+func (h hst) DisConnect(id peer.ID) error {
+	h.lhost.Peerstore().ClearAddrs(id)
 	return nil
 }
 
@@ -122,12 +115,8 @@ func (h hst) DisConnect(id string) error {
 //
 // id 节点id，msgType 消息类型， msg 消息数据 字节集
 // 远程节点返回内容将通过返回值返回
-func (h hst) SendMsg(id string, msgType string, msg MsgData) ([]byte, error) {
+func (h hst) SendMsg(peerID peer.ID, msgType string, msg MsgData) ([]byte, error) {
 	pid := protocol.ID(fmt.Sprintf("%s", msgType))
-	peerID, err := peer.IDB58Decode(id)
-	if err != nil {
-		return nil, err
-	}
 	stm, err := h.lhost.NewStream(context.Background(), peerID, pid)
 	if err != nil {
 		fmt.Println(h.lhost.Peerstore().Addrs(peerID))
@@ -137,11 +126,7 @@ func (h hst) SendMsg(id string, msgType string, msg MsgData) ([]byte, error) {
 	ed.Encode(msg)
 	return ioutil.ReadAll(stm)
 }
-func (h hst) NewStream(id string, msgType string) (inet.Stream, error) {
-	peerID, err := peer.IDB58Decode(id)
-	if err != nil {
-		return nil, err
-	}
+func (h hst) NewStream(peerID peer.ID, msgType string) (inet.Stream, error) {
 	return h.lhost.NewStream(context.Background(), peerID, protocol.ID(msgType))
 }
 
