@@ -5,7 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
-	"yottachain/ytfs-util"
+
+	"github.com/yottachain/P2PHost/util"
 
 	ci "github.com/libp2p/go-libp2p-crypto"
 
