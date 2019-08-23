@@ -2,16 +2,15 @@ package host_test
 
 import (
 	"testing"
-
-	"github.com/yottachain/P2PHost"
+	"yottachain/p2phost"
 )
 
-var localMa = []string{"/ip4/0.0.0.0/tcp/9000"}
-var localMa2 = []string{"/ip4/0.0.0.0/tcp/9001"}
-var localMa3 = []string{"/ip4/0.0.0.0/tcp/9002"}
+var localMa = "/ip4/0.0.0.0/tcp/9000"
+var localMa2 = "/ip4/0.0.0.0/tcp/9001"
+var localMa3 = "/ip4/0.0.0.0/tcp/9002"
 
 func TestNewHost(t *testing.T) {
-	host, err := host.NewHost(localMa2, nil)
+	host, err := host.NewHost(localMa)
 	if err != nil {
 		t.Fatalf("new host error: %s", err)
 	} else {
@@ -22,16 +21,16 @@ func TestNewHost(t *testing.T) {
 // TestSendMessage 测试发送接受消息
 func TestSendMessage(t *testing.T) {
 	// 创建host1模拟接受消息
-	h1, err := host.NewHost(localMa, nil)
-	h1.RegisterHandler("ping", func(msg host.Msg) []byte {
-		if string(msg.MsgType) == "ping" {
+	h1, err := host.NewHost(localMa)
+	h1.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
+		if string(msg) == "ping" {
 			return []byte("pong")
 		} else {
 			return []byte("error")
 		}
 	})
 	// 创建host2模拟发送消息
-	h2, err := host.NewHost(localMa2, nil)
+	h2, err := host.NewHost(localMa2)
 	if err != nil {
 		t.Fatalf("new host error: %s", err)
 	} else {
@@ -61,17 +60,17 @@ func TestSendMessage(t *testing.T) {
 
 // TestRealy 测试中继节点连接
 func TestRealy(t *testing.T) {
-	h1, err := host.NewHost(localMa, nil)
-	h2, err := host.NewHost(localMa2, nil)
-	h3, err := host.NewHost(localMa3, nil)
+	h1, err := host.NewHost(localMa)
+	h2, err := host.NewHost(localMa2)
+	h3, err := host.NewHost(localMa3)
 
 	h1.Connect(h2.ID(), h2.Addrs())
 	h3.Connect(h2.ID(), h2.Addrs())
 
-	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID().Pretty()})
+	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID()})
 
-	h3.RegisterHandler("ping", func(msg host.Msg) []byte {
-		if string(msg.MsgType) == "ping" {
+	h3.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
+		if string(msg) == "ping" {
 			return []byte("pong")
 		} else {
 			return nil
@@ -86,4 +85,5 @@ func TestRealy(t *testing.T) {
 		}
 	}
 	t.Log(string(res))
+
 }

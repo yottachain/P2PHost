@@ -3,14 +3,21 @@ package host
 import (
 	"context"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
 
-	"github.com/yottachain/P2PHost/util"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
+	crypto "github.com/libp2p/go-libp2p-crypto"
+	multiaddr "github.com/multiformats/go-multiaddr"
 
-	ci "github.com/libp2p/go-libp2p-crypto"
-
-	"github.com/libp2p/go-libp2p-peer"
+	peer "github.com/libp2p/go-libp2p-peer"
+	base58 "github.com/mr-tron/base58"
 
 	"github.com/libp2p/go-libp2p-peerstore"
 
@@ -20,40 +27,19 @@ import (
 	circuit "github.com/libp2p/go-libp2p-circuit"
 	inet "github.com/libp2p/go-libp2p-net"
 	protocol "github.com/libp2p/go-libp2p-protocol"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
-// PrivKey 私钥
-type PrivKey ci.PrivKey
-
-// PubKey 公钥
-type PubKey ci.PubKey
-
 // Host 接口
-// [update] 所有id string 替换成peer.ID
 type Host interface {
-	ID() peer.ID
+	ID() string
 	Addrs() []string
-	Peerstore() peerstore.Peerstore
 	// Start()
-
-	// 连接节点
-	// id 节点ID
-	// addrs 节点地址
-	Connect(id peer.ID, addrs []string) error
-	// 断开来接
-	DisConnect(id peer.ID) error
-	// 发送消息
-	// id 发送目标节点id
-	// msgType 消息类型
-	SendMsg(id peer.ID, msgType string, msg MsgData) ([]byte, error)
-	NewStream(id peer.ID, msgType string) (inet.Stream, error)
-	// 注册回调函数
-	// msgType 消息类型
-	// MsgHandlerFunc 消息处理函数
+	Connect(id string, addrs []string) error
+	DisConnect(id string) error
+	SendMsg(id string, msgType string, msg []byte) ([]byte, error)
 	RegisterHandler(msgType string, MassageHandler MsgHandlerFunc)
-	// 注销回调函数
-	unregisterHandler(msgType string)
-	// 关闭节点所有连接
+	UnregisterHandler(msgType string)
 	Close()
 }
 
@@ -61,22 +47,101 @@ type hst struct {
 	lhost host.Host
 }
 
-// MsgHandler 消息处理器
-type MsgHandler interface {
-	Process(msgType string, msg []byte)
-}
+// // MsgHandler 消息处理器
+// type MsgHandler interface {
+// 	Process(msgType string, msg []byte, publicKey string)
+// }
 
 // MsgHandlerFunc 消息处理函数
-type MsgHandlerFunc func(msg Msg) []byte
+type MsgHandlerFunc func(msgType string, msg []byte, publicKey string) ([]byte, error)
+
+var connectTimeout int
+var readTimeout int
+var writeTimeout int
+var connUpperLimit int
+var connLowerLimit int
+var enablePprof bool
+var pprofPort int
+
+func init() {
+	connectTimeoutstr := os.Getenv("P2PHOST_CONNECTTIMEOUT")
+	cto, err := strconv.Atoi(connectTimeoutstr)
+	if err != nil {
+		connectTimeout = 30
+	} else {
+		connectTimeout = cto
+	}
+	readTimeoutstr := os.Getenv("P2PHOST_READTIMEOUT")
+	rto, err := strconv.Atoi(readTimeoutstr)
+	if err != nil {
+		readTimeout = 0
+	} else {
+		readTimeout = rto
+	}
+	writeTimeoutstr := os.Getenv("P2PHOST_WRITETIMEOUT")
+	wto, err := strconv.Atoi(writeTimeoutstr)
+	if err != nil {
+		writeTimeout = 0
+	} else {
+		writeTimeout = wto
+	}
+	connUpperLimitStr := os.Getenv("P2PHOST_CONNUPPERLIMIT")
+	cul, err := strconv.Atoi(connUpperLimitStr)
+	if err != nil {
+		connUpperLimit = 2000
+	} else {
+		connUpperLimit = cul
+	}
+	connLowerLimitStr := os.Getenv("P2PHOST_CONNLOWERLIMIT")
+	cll, err := strconv.Atoi(connLowerLimitStr)
+	if err != nil {
+		connLowerLimit = 1000
+	} else {
+		connLowerLimit = cll
+	}
+	enablePprofStr := os.Getenv("P2PHOST_ENABLEPPROF")
+	ep, err := strconv.ParseBool(enablePprofStr)
+	if err != nil {
+		enablePprof = false
+	} else {
+		enablePprof = ep
+	}
+	pprofPortStr := os.Getenv("P2PHOST_PPROFPORT")
+	pp, err := strconv.Atoi(pprofPortStr)
+	if err != nil {
+		pprofPort = 6161
+	} else {
+		pprofPort = pp
+	}
+	if enablePprof {
+		go func() {
+			http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", pprofPort), nil)
+		}()
+	}
+	// setupSigusr1Trap()
+}
+
+// func setupSigusr1Trap() {
+// 	c := make(chan os.Signal, 1)
+// 	signal.Notify(c, syscall.SIGUSR1)
+// 	go func() {
+// 		for range c {
+// 			DumpStacks()
+// 		}
+// 	}()
+// }
+// func DumpStacks() {
+// 	buf := make([]byte, 1<<20)
+// 	buf = buf[:runtime.Stack(buf, true)]
+// 	fmt.Printf("=== BEGIN goroutine stack dump ===\n%s\n=== END goroutine stack dump ===", buf)
+// }
 
 // Start 启动节点 【暂时不需要，未实现】
 func (h hst) Start() {
 }
-
-// ID
-// [update] 为了和libp2p工具集统一 返回值改成了peer.id类型。可以 将string 强制转换成 peer.id peer.ID("BP_1")
-func (h hst) ID() peer.ID {
-	return h.lhost.ID()
+func (h hst) ID() string {
+	id := h.lhost.ID().Pretty()
+	return string(id)
 }
 
 func (h hst) Addrs() []string {
@@ -88,67 +153,102 @@ func (h hst) Addrs() []string {
 	return addrs
 }
 
-func (h hst) Peerstore() peerstore.Peerstore {
-	return h.Peerstore()
-}
-
 // Connect 连接节点
-func (h hst) Connect(id peer.ID, addrs []string) error {
-	maddrs, err := util.StringListToMaddrs(addrs)
+func (h hst) Connect(id string, addrs []string) error {
+	maddrs, err := StringListToMaddrs(addrs)
+	if err != nil {
+		return err
+	}
+	pid, err := peer.IDB58Decode(id)
 	if err != nil {
 		return err
 	}
 	info := peerstore.PeerInfo{
-		ID:    id,
-		Addrs: maddrs,
+		pid,
+		maddrs,
 	}
-	h.lhost.Connect(context.Background(), info)
+	ctx, cancle := context.WithTimeout(context.Background(), time.Second*time.Duration(connectTimeout))
+	defer cancle()
+	h.lhost.Connect(ctx, info)
 	return nil
 }
 
 // DisConnect 断开连接
-func (h hst) DisConnect(id peer.ID) error {
-	h.lhost.Peerstore().ClearAddrs(id)
+func (h hst) DisConnect(id string) error {
+	pid, err := peer.IDB58Decode(id)
+	if err != nil {
+		return err
+	}
+	h.lhost.Peerstore().ClearAddrs(pid)
 	return nil
 }
+
+// Msg 消息
+type Msg []byte
 
 // SendMsg 发送消息
 //
 // id 节点id，msgType 消息类型， msg 消息数据 字节集
 // 远程节点返回内容将通过返回值返回
-func (h hst) SendMsg(peerID peer.ID, msgType string, msg MsgData) ([]byte, error) {
-	pid := protocol.ID(fmt.Sprintf("%s", msgType))
-	stm, err := h.lhost.NewStream(context.Background(), peerID, pid)
+func (h hst) SendMsg(id string, msgType string, msg []byte) ([]byte, error) {
+	pid := protocol.ID(msgType)
+	peerID, err := peer.IDB58Decode(id)
 	if err != nil {
-		fmt.Println(h.lhost.Peerstore().Addrs(peerID))
 		return nil, err
 	}
+	ctx, cancle := context.WithTimeout(context.Background(), time.Second*time.Duration(connectTimeout))
+	defer cancle()
+	stm, err := h.lhost.NewStream(ctx, peerID, pid)
+	if err != nil {
+		//fmt.Println(h.lhost.Peerstore().Addrs(peerID))
+		return nil, err
+	}
+	defer stm.Close()
+	if writeTimeout > 0 {
+		stm.SetWriteDeadline(time.Now().Add(time.Duration(writeTimeout) * time.Second))
+	}
+	if readTimeout > 0 {
+		stm.SetReadDeadline(time.Now().Add(time.Duration(readTimeout) * time.Second))
+	}
 	ed := gob.NewEncoder(stm)
-	ed.Encode(msg)
+	err = ed.Encode(msg)
+	if err != nil {
+		return nil, err
+	}
 	return ioutil.ReadAll(stm)
-}
-func (h hst) NewStream(peerID peer.ID, msgType string) (inet.Stream, error) {
-	return h.lhost.NewStream(context.Background(), peerID, protocol.ID(msgType))
 }
 
 // RegisterHandler 注册消息回调函数
-func (h hst) RegisterHandler(msgType string, MassageHandler MsgHandlerFunc) {
+func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
 	pid := protocol.ID(msgType)
 	h.lhost.SetStreamHandler(pid, func(stm inet.Stream) {
 		defer stm.Close()
-		var msgData []byte
+		var msg Msg
 		dd := gob.NewDecoder(stm)
-		dd.Decode(&msgData)
-		stm.Write(MassageHandler(Msg{
-			msgData,
-			msgType,
-			stm.Conn(),
-		}))
+		dd.Decode(&msg)
+		pkarr, err := stm.Conn().RemotePublicKey().Raw()
+		if err != nil {
+			stm.Reset()
+			log.Println(err)
+			return
+		}
+		resp, err := MessageHandler(msgType, msg, base58.Encode(pkarr))
+		if err != nil {
+			stm.Reset()
+			log.Println(err)
+			return
+		}
+		_, err = stm.Write(resp)
+		if err != nil {
+			stm.Reset()
+			log.Println(err)
+			return
+		}
 	})
 }
 
 // unregisterHandler 移除消息处理器
-func (h hst) unregisterHandler(msgType string) {
+func (h hst) UnregisterHandler(msgType string) {
 	h.lhost.RemoveStreamHandler(protocol.ID(msgType))
 }
 
@@ -158,17 +258,34 @@ func (h hst) Close() {
 }
 
 // NewHost 创建节点
-//
-// addrs 监听地址
-// privKey 私钥
-func NewHost(addrs []string, privKey PrivKey) (Host, error) {
+func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
+	maddrs, err := StringListToMaddrs(listenAddrs)
 
+	addrs := libp2p.ListenAddrs(maddrs...)
+	connMgr := connmgr.NewConnManager(connUpperLimit, connLowerLimit, 0)
 	opts := []libp2p.Option{
-		libp2p.ListenAddrStrings(addrs...),
+		addrs,
+		libp2p.NATPortMap(),
 		libp2p.EnableRelay(circuit.OptHop, circuit.OptDiscovery),
+		libp2p.ConnectionManager(connMgr),
+		libp2p.AddrsFactory(func(addrs []ma.Multiaddr) []ma.Multiaddr { return addrs }),
 	}
-	if privKey != nil {
-		opts = append(opts, libp2p.Identity(privKey))
+	if privateKey != "" {
+		privbytes, err := base58.Decode(privateKey)
+		if err != nil {
+			return nil, errors.New("bad format of private key,Base58 format needed")
+		}
+		priv, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+		if err != nil {
+			return nil, errors.New("bad format of private key")
+		}
+		opts = append(opts, libp2p.Identity(priv))
+	} else {
+		peer, err := RandomPeer()
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, libp2p.Identity(peer.Priv))
 	}
 	h, err := libp2p.New(context.Background(), opts...)
 	if err != nil {
@@ -179,14 +296,14 @@ func NewHost(addrs []string, privKey PrivKey) (Host, error) {
 	}, nil
 }
 
-// ListenAddrStrings 返回监听地址
-func ListenAddrStrings(addrs ...string) []string {
-	return addrs
-}
-
-// WarpHost 包装host
-func WarpHost(host host.Host) Host {
-	return &hst{
-		host,
+func StringListToMaddrs(addrs []string) ([]multiaddr.Multiaddr, error) {
+	maddrs := make([]multiaddr.Multiaddr, len(addrs))
+	for k, addr := range addrs {
+		maddr, err := multiaddr.NewMultiaddr(addr)
+		if err != nil {
+			return maddrs, err
+		}
+		maddrs[k] = maddr
 	}
+	return maddrs, nil
 }
