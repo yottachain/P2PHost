@@ -119,3 +119,5 @@ import:
 - package: github.com/btcsuite/btcd
 - package: github.com/mr-tron/base58
   version: v1.1.2
+- package: github.com/juju/ratelimit
+  version: v1.0.1

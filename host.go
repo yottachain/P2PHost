@@ -2,19 +2,26 @@ package host
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/gob"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
 
+	"golang.org/x/crypto/ripemd160"
+
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	multiaddr "github.com/multiformats/go-multiaddr"
+	"golang.org/x/net/http2"
 
 	peer "github.com/libp2p/go-libp2p-peer"
 	base58 "github.com/mr-tron/base58"
@@ -23,6 +30,7 @@ import (
 
 	"github.com/libp2p/go-libp2p-host"
 
+	rl "github.com/juju/ratelimit"
 	"github.com/libp2p/go-libp2p"
 	circuit "github.com/libp2p/go-libp2p-circuit"
 	inet "github.com/libp2p/go-libp2p-net"
@@ -44,7 +52,9 @@ type Host interface {
 }
 
 type hst struct {
-	lhost host.Host
+	lhost       host.Host
+	client      http.Client
+	ratelimiter *rl.Bucket
 }
 
 // // MsgHandler 消息处理器
@@ -55,6 +65,8 @@ type hst struct {
 // MsgHandlerFunc 消息处理函数
 type MsgHandlerFunc func(msgType string, msg []byte, publicKey string) ([]byte, error)
 
+var ratelimit int64
+var callbackPort int
 var connectTimeout int
 var readTimeout int
 var writeTimeout int
@@ -64,6 +76,21 @@ var enablePprof bool
 var pprofPort int
 
 func init() {
+	ratelimitstr := os.Getenv("P2PHOST_RATELIMIT")
+	rls, err := strconv.Atoi(ratelimitstr)
+	if err != nil {
+		ratelimit = 8000
+	} else {
+		ratelimit = int64(rls)
+	}
+	callbackPortstr := os.Getenv("P2PHOST_CALLBACKPORT")
+	cbp, err := strconv.Atoi(callbackPortstr)
+	if err != nil {
+		callbackPort = 18999
+	} else {
+		callbackPort = cbp
+	}
+
 	connectTimeoutstr := os.Getenv("P2PHOST_CONNECTTIMEOUT")
 	cto, err := strconv.Atoi(connectTimeoutstr)
 	if err != nil {
@@ -220,9 +247,32 @@ func (h hst) SendMsg(id string, msgType string, msg []byte) ([]byte, error) {
 
 // RegisterHandler 注册消息回调函数
 func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
+	if MessageHandler == nil {
+		MessageHandler = func(msgType string, msg []byte, publicKey string) ([]byte, error) {
+			//log.Printf("##### %s Receive Message: Type: 0x%s, Public Key: %s", time.Now().Format("2006-01-02 15:04:05"), hex.EncodeToString(msg[0:2]), publicKey)
+			resp, err := h.client.PostForm(fmt.Sprintf("http://127.0.0.1:%d", callbackPort),
+				url.Values{"type": {msgType}, "data": {hex.EncodeToString(msg)}, "pubkey": {publicKey}})
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			return hex.DecodeString(string(body))
+		}
+	}
 	pid := protocol.ID(msgType)
 	h.lhost.SetStreamHandler(pid, func(stm inet.Stream) {
+		//s := time.Now()
 		defer stm.Close()
+		h.ratelimiter.Wait(1)
+		// if c := h.ratelimiter.TakeAvailable(1); c == 0 {
+		// 	stm.Reset()
+		// 	log.Println("Qos backoff request")
+		// 	return
+		// }
 		var msg Msg
 		dd := gob.NewDecoder(stm)
 		dd.Decode(&msg)
@@ -232,6 +282,10 @@ func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
 			log.Println(err)
 			return
 		}
+		hasher := ripemd160.New()
+		hasher.Write(pkarr)
+		sum := hasher.Sum(nil)
+		pkarr = append(pkarr, sum[0:4]...)
 		resp, err := MessageHandler(msgType, msg, base58.Encode(pkarr))
 		if err != nil {
 			stm.Reset()
@@ -244,6 +298,7 @@ func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
 			log.Println(err)
 			return
 		}
+		//log.Println(fmt.Sprintf("###### process message from %s, cost %f", base58.Encode(pkarr), time.Now().Sub(s).Seconds()))
 	})
 }
 
@@ -291,8 +346,20 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 	if err != nil {
 		return nil, err
 	}
+	ratelimiter := rl.NewBucketWithRate(float64(ratelimit), ratelimit)
+	log.Printf("##### initializing rate limit to %d per second.", ratelimit)
 	return &hst{
 		h,
+		http.Client{
+			Transport: &http2.Transport{
+				AllowHTTP: true,
+				DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+					return net.Dial(network, addr)
+				},
+				StrictMaxConcurrentStreams: false,
+			},
+		},
+		ratelimiter,
 	}, nil
 }
 

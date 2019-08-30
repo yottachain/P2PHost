@@ -186,13 +186,12 @@ static void cstart() {
 */
 import "C"
 import (
-	"errors"
 	"fmt"
 	_ "net/http/pprof"
 	"sync"
 	"unsafe"
 
-	host "yottachain/p2phost"
+	host "github.com/yottachain/P2PHost"
 )
 
 var p2phst host.Host
@@ -308,23 +307,23 @@ func RegisterHandlerWrp(msgType *C.char, f unsafe.Pointer) *C.char {
 	if p2phst == nil {
 		return C.CString("p2phost has not started")
 	}
-	handler := func(msgType string, data []byte, pubkey string) ([]byte, error) {
-		cmsgType := C.CString(msgType)
-		cpubkey := C.CString(pubkey)
-		cdata := C.CBytes(data)
-		csize := C.longlong(len(data))
-		defer C.free(unsafe.Pointer(cmsgType))
-		defer C.free(unsafe.Pointer(cpubkey))
-		defer C.free(unsafe.Pointer(cdata))
-		ret := C.executeHandler((*[0]byte)(f), cmsgType, (*C.char)(cdata), csize, cpubkey)
-		defer FreeSendMsgRet(ret)
-		if ret.error != nil {
-			return nil, errors.New(C.GoString(ret.error))
-		}
-		retdata := C.GoBytes(unsafe.Pointer(ret.msg), C.int(ret.size))
-		return retdata, nil
-	}
-	p2phst.RegisterHandler(C.GoString(msgType), handler)
+	// handler := func(msgType string, data []byte, pubkey string) ([]byte, error) {
+	// 	cmsgType := C.CString(msgType)
+	// 	cpubkey := C.CString(pubkey)
+	// 	cdata := C.CBytes(data)
+	// 	csize := C.longlong(len(data))
+	// 	defer C.free(unsafe.Pointer(cmsgType))
+	// 	defer C.free(unsafe.Pointer(cpubkey))
+	// 	defer C.free(unsafe.Pointer(cdata))
+	// 	ret := C.executeHandler((*[0]byte)(f), cmsgType, (*C.char)(cdata), csize, cpubkey)
+	// 	defer FreeSendMsgRet(ret)
+	// 	if ret.error != nil {
+	// 		return nil, errors.New(C.GoString(ret.error))
+	// 	}
+	// 	retdata := C.GoBytes(unsafe.Pointer(ret.msg), C.int(ret.size))
+	// 	return retdata, nil
+	// }
+	p2phst.RegisterHandler(C.GoString(msgType), nil)
 	return nil
 }
 
