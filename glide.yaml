@@ -1,4 +1,4 @@
-package: yottachain/p2phost
+package: github.com/yottachain/p2phost
 import:
 - package: github.com/tidwall/gjson
   version: v1.2.1
