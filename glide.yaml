@@ -103,6 +103,7 @@ import:
 - package: github.com/libp2p/go-testutil
   version: v0.1.0
 - package: github.com/libp2p/go-libp2p-circuit-progs
+  version: master
 - package: github.com/libp2p/go-libp2p-core
   version: v0.0.3
 - package: github.com/fd/go-nat
@@ -110,6 +111,7 @@ import:
 - package: github.com/whyrusleeping/go-smux-yamux
   version: v2.0.9
 - package: github.com/whyrusleeping/go-notifier
+  version: master
 - package: github.com/whyrusleeping/go-smux-multiplex
   version: v3.0.16
 - package: github.com/whyrusleeping/go-smux-multistream
@@ -117,7 +119,12 @@ import:
 - package: github.com/whyrusleeping/yamux
   version: v1.2.0
 - package: github.com/btcsuite/btcd
+  version: master
 - package: github.com/mr-tron/base58
   version: v1.1.2
 - package: github.com/juju/ratelimit
   version: v1.0.1
+- package: google.golang.org/grpc
+  version: v1.23.0
+- package: go.etcd.io/etcd
+  version: v3.4.0

@@ -2,7 +2,8 @@ package host_test
 
 import (
 	"testing"
-	"yottachain/p2phost"
+
+	host "github.com/yottachain/P2PHost"
 )
 
 var localMa = "/ip4/0.0.0.0/tcp/9000"
@@ -22,11 +23,11 @@ func TestNewHost(t *testing.T) {
 func TestSendMessage(t *testing.T) {
 	// 创建host1模拟接受消息
 	h1, err := host.NewHost(localMa)
-	h1.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
+	h1.RegisterHandler("ping", func(msgType string, msg []byte, publicKey string) ([]byte, error) {
 		if string(msg) == "ping" {
-			return []byte("pong")
+			return []byte("pong"), nil
 		} else {
-			return []byte("error")
+			return []byte("error"), nil
 		}
 	})
 	// 创建host2模拟发送消息
@@ -69,11 +70,11 @@ func TestRealy(t *testing.T) {
 
 	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID()})
 
-	h3.RegisterHandler("ping", func(msgType string, msg []byte) []byte {
+	h3.RegisterHandler("ping", func(msgType string, msg []byte, publicKey string) ([]byte, eror) {
 		if string(msg) == "ping" {
-			return []byte("pong")
+			return []byte("pong"), nil
 		} else {
-			return nil
+			return nil, nil
 		}
 	})
 	res, err := h1.SendMsg(h3.ID(), "ping", []byte("ping"))

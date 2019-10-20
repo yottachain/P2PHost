@@ -26,9 +26,9 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 	base58 "github.com/mr-tron/base58"
 
-	"github.com/libp2p/go-libp2p-peerstore"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
 
-	"github.com/libp2p/go-libp2p-host"
+	host "github.com/libp2p/go-libp2p-host"
 
 	rl "github.com/juju/ratelimit"
 	"github.com/libp2p/go-libp2p"
@@ -40,6 +40,7 @@ import (
 
 // Host 接口
 type Host interface {
+	ConfigCallback(host string, port int32)
 	ID() string
 	Addrs() []string
 	// Start()
@@ -52,9 +53,11 @@ type Host interface {
 }
 
 type hst struct {
-	lhost       host.Host
-	client      http.Client
-	ratelimiter *rl.Bucket
+	lhost        host.Host
+	client       http.Client
+	ratelimiter  *rl.Bucket
+	callbackHost string
+	callbackPort int32
 }
 
 // // MsgHandler 消息处理器
@@ -66,7 +69,6 @@ type hst struct {
 type MsgHandlerFunc func(msgType string, msg []byte, publicKey string) ([]byte, error)
 
 var ratelimit int64
-var callbackPort int
 var connectTimeout int
 var readTimeout int
 var writeTimeout int
@@ -82,13 +84,6 @@ func init() {
 		ratelimit = 8000
 	} else {
 		ratelimit = int64(rls)
-	}
-	callbackPortstr := os.Getenv("P2PHOST_CALLBACKPORT")
-	cbp, err := strconv.Atoi(callbackPortstr)
-	if err != nil {
-		callbackPort = 18999
-	} else {
-		callbackPort = cbp
 	}
 
 	connectTimeoutstr := os.Getenv("P2PHOST_CONNECTTIMEOUT")
@@ -164,14 +159,18 @@ func init() {
 // }
 
 // Start 启动节点 【暂时不需要，未实现】
-func (h hst) Start() {
+func (h *hst) Start() {
 }
-func (h hst) ID() string {
+func (h *hst) ConfigCallback(host string, port int32) {
+	h.callbackHost = host
+	h.callbackPort = port
+}
+func (h *hst) ID() string {
 	id := h.lhost.ID().Pretty()
 	return string(id)
 }
 
-func (h hst) Addrs() []string {
+func (h *hst) Addrs() []string {
 	maddrs := h.lhost.Addrs()
 	addrs := make([]string, len(maddrs))
 	for k, ma := range maddrs {
@@ -181,7 +180,7 @@ func (h hst) Addrs() []string {
 }
 
 // Connect 连接节点
-func (h hst) Connect(id string, addrs []string) error {
+func (h *hst) Connect(id string, addrs []string) error {
 	maddrs, err := StringListToMaddrs(addrs)
 	if err != nil {
 		return err
@@ -201,7 +200,7 @@ func (h hst) Connect(id string, addrs []string) error {
 }
 
 // DisConnect 断开连接
-func (h hst) DisConnect(id string) error {
+func (h *hst) DisConnect(id string) error {
 	pid, err := peer.IDB58Decode(id)
 	if err != nil {
 		return err
@@ -217,7 +216,7 @@ type Msg []byte
 //
 // id 节点id，msgType 消息类型， msg 消息数据 字节集
 // 远程节点返回内容将通过返回值返回
-func (h hst) SendMsg(id string, msgType string, msg []byte) ([]byte, error) {
+func (h *hst) SendMsg(id string, msgType string, msg []byte) ([]byte, error) {
 	pid := protocol.ID(msgType)
 	peerID, err := peer.IDB58Decode(id)
 	if err != nil {
@@ -246,15 +245,19 @@ func (h hst) SendMsg(id string, msgType string, msg []byte) ([]byte, error) {
 }
 
 // RegisterHandler 注册消息回调函数
-func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
+func (h *hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
 	if MessageHandler == nil {
+		callbackURL := fmt.Sprintf("http://%s:%d", h.callbackHost, h.callbackPort)
+		log.Printf("Callback URL: %s\n", callbackURL)
 		MessageHandler = func(msgType string, msg []byte, publicKey string) ([]byte, error) {
 			//log.Printf("##### %s Receive Message: Type: 0x%s, Public Key: %s", time.Now().Format("2006-01-02 15:04:05"), hex.EncodeToString(msg[0:2]), publicKey)
-			resp, err := h.client.PostForm(fmt.Sprintf("http://127.0.0.1:%d", callbackPort),
+			resp, err := h.client.PostForm(callbackURL,
 				url.Values{"type": {msgType}, "data": {hex.EncodeToString(msg)}, "pubkey": {publicKey}})
 			if err != nil {
+				log.Printf("Receive message error: %s\n", err.Error())
 				return nil, err
 			}
+			log.Printf("Receive message: msg type -> %s, pub key -> %s\n", msgType, publicKey)
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
@@ -303,12 +306,12 @@ func (h hst) RegisterHandler(msgType string, MessageHandler MsgHandlerFunc) {
 }
 
 // unregisterHandler 移除消息处理器
-func (h hst) UnregisterHandler(msgType string) {
+func (h *hst) UnregisterHandler(msgType string) {
 	h.lhost.RemoveStreamHandler(protocol.ID(msgType))
 }
 
 // Close 关闭
-func (h hst) Close() {
+func (h *hst) Close() {
 	h.lhost.Close()
 }
 
@@ -349,8 +352,8 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 	ratelimiter := rl.NewBucketWithRate(float64(ratelimit), ratelimit)
 	log.Printf("##### initializing rate limit to %d per second.", ratelimit)
 	return &hst{
-		h,
-		http.Client{
+		lhost: h,
+		client: http.Client{
 			Transport: &http2.Transport{
 				AllowHTTP: true,
 				DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
@@ -359,7 +362,7 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 				StrictMaxConcurrentStreams: false,
 			},
 		},
-		ratelimiter,
+		ratelimiter: ratelimiter,
 	}, nil
 }
 
