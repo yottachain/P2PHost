@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	host "github.com/yottachain/P2PHost"
+	ytcrypto "github.com/yottachain/YTCrypto"
 )
 
 var localMa = "/ip4/0.0.0.0/tcp/9000"
@@ -11,7 +12,8 @@ var localMa2 = "/ip4/0.0.0.0/tcp/9001"
 var localMa3 = "/ip4/0.0.0.0/tcp/9002"
 
 func TestNewHost(t *testing.T) {
-	host, err := host.NewHost(localMa)
+	privKey, _ := ytcrypto.CreateKey()
+	host, err := host.NewHost(privKey, localMa)
 	if err != nil {
 		t.Fatalf("new host error: %s", err)
 	} else {
@@ -22,7 +24,8 @@ func TestNewHost(t *testing.T) {
 // TestSendMessage 测试发送接受消息
 func TestSendMessage(t *testing.T) {
 	// 创建host1模拟接受消息
-	h1, err := host.NewHost(localMa)
+	privKey, _ := ytcrypto.CreateKey()
+	h1, err := host.NewHost(privKey, localMa)
 	h1.RegisterHandler("ping", func(msgType string, msg []byte, publicKey string) ([]byte, error) {
 		if string(msg) == "ping" {
 			return []byte("pong"), nil
@@ -31,7 +34,8 @@ func TestSendMessage(t *testing.T) {
 		}
 	})
 	// 创建host2模拟发送消息
-	h2, err := host.NewHost(localMa2)
+	privKey2, _ := ytcrypto.CreateKey()
+	h2, err := host.NewHost(privKey2, localMa2)
 	if err != nil {
 		t.Fatalf("new host error: %s", err)
 	} else {
@@ -61,16 +65,19 @@ func TestSendMessage(t *testing.T) {
 
 // TestRealy 测试中继节点连接
 func TestRealy(t *testing.T) {
-	h1, err := host.NewHost(localMa)
-	h2, err := host.NewHost(localMa2)
-	h3, err := host.NewHost(localMa3)
+	privKey, _ := ytcrypto.CreateKey()
+	h1, err := host.NewHost(privKey, localMa)
+	privKey2, _ := ytcrypto.CreateKey()
+	h2, err := host.NewHost(privKey2, localMa2)
+	privKey3, _ := ytcrypto.CreateKey()
+	h3, err := host.NewHost(privKey3, localMa3)
 
 	h1.Connect(h2.ID(), h2.Addrs())
 	h3.Connect(h2.ID(), h2.Addrs())
 
 	h1.Connect(h3.ID(), []string{"/p2p-circuit/p2p/" + h3.ID()})
 
-	h3.RegisterHandler("ping", func(msgType string, msg []byte, publicKey string) ([]byte, eror) {
+	h3.RegisterHandler("ping", func(msgType string, msg []byte, publicKey string) ([]byte, error) {
 		if string(msg) == "ping" {
 			return []byte("pong"), nil
 		} else {
