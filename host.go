@@ -20,7 +20,6 @@ import (
 
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-crypto"
-	multiaddr "github.com/multiformats/go-multiaddr"
 	"golang.org/x/net/http2"
 
 	peer "github.com/libp2p/go-libp2p-peer"
@@ -173,8 +172,8 @@ func (h *hst) ID() string {
 func (h *hst) Addrs() []string {
 	maddrs := h.lhost.Addrs()
 	addrs := make([]string, len(maddrs))
-	for k, ma := range maddrs {
-		addrs[k] = ma.String()
+	for k, m := range maddrs {
+		addrs[k] = m.String()
 	}
 	return addrs
 }
@@ -326,7 +325,7 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 		libp2p.NATPortMap(),
 		libp2p.EnableRelay(circuit.OptHop, circuit.OptDiscovery),
 		libp2p.ConnectionManager(connMgr),
-		libp2p.AddrsFactory(func(addrs []ma.Multiaddr) []ma.Multiaddr { return addrs }),
+		libp2p.AddrsFactory(func(addrs []ma.Multiaddr) []ma.Multiaddr { return addrs })
 	}
 	if privateKey != "" {
 		privbytes, err := base58.Decode(privateKey)
@@ -366,10 +365,10 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 	}, nil
 }
 
-func StringListToMaddrs(addrs []string) ([]multiaddr.Multiaddr, error) {
-	maddrs := make([]multiaddr.Multiaddr, len(addrs))
+func StringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
+	maddrs := make([]ma.Multiaddr, len(addrs))
 	for k, addr := range addrs {
-		maddr, err := multiaddr.NewMultiaddr(addr)
+		maddr, err := ma.NewMultiaddr(addr)
 		if err != nil {
 			return maddrs, err
 		}
