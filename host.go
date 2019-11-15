@@ -325,7 +325,7 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 		libp2p.NATPortMap(),
 		libp2p.EnableRelay(circuit.OptHop, circuit.OptDiscovery),
 		libp2p.ConnectionManager(connMgr),
-		libp2p.AddrsFactory(func(addrs []ma.Multiaddr) []ma.Multiaddr { return addrs })
+		libp2p.AddrsFactory(func(addrs []ma.Multiaddr) []ma.Multiaddr { return addrs }),
 	}
 	if privateKey != "" {
 		privbytes, err := base58.Decode(privateKey)
