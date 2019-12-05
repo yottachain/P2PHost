@@ -68,6 +68,8 @@ type hst struct {
 type MsgHandlerFunc func(msgType string, msg []byte, publicKey string) ([]byte, error)
 
 var ratelimit int64
+var callbackHost string
+var callbackPort int
 var connectTimeout int
 var readTimeout int
 var writeTimeout int
@@ -83,6 +85,18 @@ func init() {
 		ratelimit = 8000
 	} else {
 		ratelimit = int64(rls)
+	}
+
+	callbackHost = os.Getenv("P2PHOST_CALLBACKHOST")
+	if callbackHost == "" {
+		callbackHost = "127.0.0.1"
+	}
+	callbackPortstr := os.Getenv("P2PHOST_CALLBACKPORT")
+	cbp, err := strconv.Atoi(callbackPortstr)
+	if err != nil {
+		callbackPort = 18999
+	} else {
+		callbackPort = cbp
 	}
 
 	connectTimeoutstr := os.Getenv("P2PHOST_CONNECTTIMEOUT")
@@ -361,7 +375,9 @@ func NewHost(privateKey string, listenAddrs ...string) (Host, error) {
 				StrictMaxConcurrentStreams: false,
 			},
 		},
-		ratelimiter: ratelimiter,
+		ratelimiter:  ratelimiter,
+		callbackHost: callbackHost,
+		callbackPort: int32(callbackPort),
 	}, nil
 }
 
