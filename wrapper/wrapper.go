@@ -32,7 +32,7 @@ extern idret* IDWrp();
 extern addrsret* AddrsWrp();
 extern char* CloseWrp();
 extern char* ConnectWrp(char *nodeID, char **addrs, int size);
-extern sendmsgret* SendMsgWrp(char *nodeID, char *msgType, char *msg, long long size);
+extern sendmsgret* SendMsgWrp(char *nodeID, char *msgid, char *msg, long long size);
 extern char* RegisterHandlerWrp(char *msgType, void *handler);
 extern char* UnregisterHandlerWrp(char *msgType);
 extern void FreeString(void *ptr);
@@ -80,7 +80,7 @@ static sendmsgret* msgprocessor(char* msgType, char* data, long long size, char*
 }
 
 static void sstart() {
- 	int port = 8888;
+ 	int port = 7999;
  	char *privkey = "5JSgrkY3jawhV1yTj3HiGJ643TeDFJdbEV3JA2akMJA3LLZFxn1";
 	char *err = StartWrp(port, privkey);
 	if (err != NULL) {
@@ -122,12 +122,13 @@ static void sstart() {
 	}
 
 	//CloseWrp();
-
-	sleep(10000);
+	while(1)
+		sleep(10000);
+	printf("server end!!!!!");
 }
 
 static void cstart() {
-	int port = 9999;
+	int port = 9998;
  	char *privkey = "5JhXaYtCgA7eW9HAq5LAPqJ2FQ7xt68qnc9VRCumpv24D6pX1sL";
 	char *err = StartWrp(port, privkey);
 	if (err != NULL) {
@@ -160,7 +161,7 @@ static void cstart() {
 	}
 	FreeAddrsRet(retp2);
 
-	char *addrs[1] = {"/ip4/127.0.0.1/tcp/8888"};
+	char *addrs[1] = {"/ip4/127.0.0.1/tcp/7999"};
 	err = ConnectWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", addrs, 1);
 	if (err != NULL) {
 		printf("error: %s\n", err);
@@ -170,7 +171,10 @@ static void cstart() {
 	}
 
 	char data[12] = {'s','e','n','d',' ','m','e','s','s','a','g','e'};
-	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", "test", data, 12);
+	char msid[2] ;
+	msid[0] = 1;
+	msid[1] = 1;
+	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
 		FreeSendMsgRet(retp3);
@@ -186,16 +190,29 @@ static void cstart() {
 */
 import "C"
 import (
+	"bytes"
+	"context"
+	"encoding/binary"
 	"fmt"
+	"github.com/graydream/YTHost/option"
+	"github.com/libp2p/go-libp2p-core/peer"
+	base58 "github.com/mr-tron/base58"
 	_ "net/http/pprof"
 	"sync"
+	"time"
 	"unsafe"
 
-	host "github.com/yottachain/P2PHost"
+	p2ph "github.com/P2PHost"
+	hst "github.com/graydream/YTHost"
+	host "github.com/graydream/YTHost/hostInterface"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 var p2phst host.Host
+//var p2pcli *client.YTHostClient
 var mu sync.Mutex
+var p2phcli p2ph.Hclient
 
 //export StartWrp
 func StartWrp(port C.int, privkey *C.char) *C.char {
@@ -205,14 +222,31 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 		return C.CString("p2phost has started")
 	}
 
-	pk := C.GoString(privkey)
 	pt := int(port)
-	var err error
-	p2phst, err = host.NewHost(pk, fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
-	//_ = p2phst
+	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
+
+	pks := C.GoString(privkey)
+	privbytes, err := base58.Decode(pks)
+	if err != nil {
+		return C.CString("bad format of private key,Base58 format needed")
+	}
+	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+	if err != nil {
+		return C.CString("bad format of private key")
+	}
+
+	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.Identity(pk))
 	if err != nil {
 		return C.CString(err.Error())
 	}
+
+	p2phcli, err = p2ph.NewHclient()
+	if err != nil {
+		return C.CString(err.Error())
+	}
+
+	go p2phst.Accept()
+
 	return nil
 }
 
@@ -221,7 +255,8 @@ func IDWrp() *C.idret {
 	if p2phst == nil {
 		return CreateIDRet(nil, C.CString("p2phost has not started"))
 	}
-	id := p2phst.ID()
+	id := p2phst.Config().ID.String()
+
 	var cID *C.char
 	if id != "" {
 		cID = C.CString(id)
@@ -235,7 +270,13 @@ func AddrsWrp() *C.addrsret {
 	if p2phst == nil {
 		return CreateAddrsRet(nil, 0, C.CString("p2phost has not started"))
 	}
-	addrs := p2phst.Addrs()
+
+	maddrs := p2phst.Addrs()
+	addrs := make([]string, len(maddrs))
+	for k, m := range maddrs {
+		addrs[k] = m.String()
+	}
+
 	var caddrs **C.char
 	if addrs != nil && len(addrs) > 0 {
 		caddrs = C.makeCharArray(C.int(len(addrs)))
@@ -252,7 +293,7 @@ func CloseWrp() *C.char {
 	if p2phst == nil {
 		return C.CString("p2phost has not started")
 	}
-	p2phst.Close()
+	//p2phst.Close()
 	return nil
 }
 
@@ -268,7 +309,13 @@ func ConnectWrp(nodeID *C.char, addrs **C.char, size C.int) *C.char {
 		gaddrs[i] = C.GoString(s)
 	}
 	nodeIdStr := C.GoString(nodeID)
-	err := p2phst.Connect(nodeIdStr, gaddrs)
+
+	maddrs, err := stringListToMaddrs(gaddrs)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+	defer cancel()
+	//p2pcli, err = p2phst.Connect(ctx, peer.ID(nodeIdStr), maddrs)
+	_, err = p2phst.ClientStore().Get(ctx, peer.ID(nodeIdStr), maddrs)
+
 	if err != nil {
 		return C.CString(err.Error())
 	}
@@ -280,22 +327,39 @@ func DisconnectWrp(nodeID *C.char) *C.char {
 	if p2phst == nil {
 		return C.CString("p2phost has not started")
 	}
-	err := p2phst.DisConnect(C.GoString(nodeID))
+
+	err := p2phst.ClientStore().Close(peer.ID(C.GoString(nodeID)))
 	if err != nil {
 		return C.CString(err.Error())
 	}
+
 	return nil
 }
 
 //export SendMsgWrp
-func SendMsgWrp(nodeID *C.char, msgType *C.char, msg *C.char, size C.longlong) *C.sendmsgret {
+func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.sendmsgret {
 	if p2phst == nil {
 		return CreateSendMsgRet(nil, 0, C.CString("p2phost has not started"))
 	}
+
+	if unsafe.Pointer(nodeID) == nil {
+		return CreateSendMsgRet(nil, 0, C.CString("nodeid is nil when send msg"))
+	}
 	nodeIDStr := C.GoString(nodeID)
-	msgTypeStr := C.GoString(msgType)
+
+
+	msid := (*[2]byte)(unsafe.Pointer(msgid))[:2:2]
+	bytebuff := bytes.NewBuffer(msid)
+	var tmp uint16
+	err := binary.Read(bytebuff, binary.BigEndian, &tmp)
+
+	msgId := int32(tmp)
+
 	msgSlice := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
-	ret, err := p2phst.SendMsg(nodeIDStr, msgTypeStr, msgSlice)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+	defer cancel()
+	ret, err := p2phst.SendMsg(ctx, peer.ID(nodeIDStr), msgId, msgSlice)
+	//ret, err := p2phst.SendMsg(context.Background(), peer.ID(nodeIDStr), 0x11, msgSlice)
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
@@ -307,23 +371,20 @@ func RegisterHandlerWrp(msgType *C.char, f unsafe.Pointer) *C.char {
 	if p2phst == nil {
 		return C.CString("p2phost has not started")
 	}
-	// handler := func(msgType string, data []byte, pubkey string) ([]byte, error) {
-	// 	cmsgType := C.CString(msgType)
-	// 	cpubkey := C.CString(pubkey)
-	// 	cdata := C.CBytes(data)
-	// 	csize := C.longlong(len(data))
-	// 	defer C.free(unsafe.Pointer(cmsgType))
-	// 	defer C.free(unsafe.Pointer(cpubkey))
-	// 	defer C.free(unsafe.Pointer(cdata))
-	// 	ret := C.executeHandler((*[0]byte)(f), cmsgType, (*C.char)(cdata), csize, cpubkey)
-	// 	defer FreeSendMsgRet(ret)
-	// 	if ret.error != nil {
-	// 		return nil, errors.New(C.GoString(ret.error))
-	// 	}
-	// 	retdata := C.GoBytes(unsafe.Pointer(ret.msg), C.int(ret.size))
-	// 	return retdata, nil
-	// }
-	p2phst.RegisterHandler(C.GoString(msgType), nil)
+
+	if p2phcli == nil {
+		return C.CString("p2phcli has not created")
+	}
+
+	/*
+	MessageHandler := func(requestData []byte, head service.Head) ([]byte, error){
+		fmt.Println(string(requestData))
+		return []byte("ok!!!"), nil
+	}
+	*/
+
+	//p2phst.RegisterHandler(0x14, MessageHandler)
+	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
 	return nil
 }
 
@@ -332,8 +393,9 @@ func UnregisterHandlerWrp(msgType *C.char) *C.char {
 	if p2phst == nil {
 		return C.CString("p2phost has not started")
 	}
-	gmsgType := C.GoString(msgType)
-	p2phst.UnregisterHandler(gmsgType)
+	//gmsgType := C.GoString(msgType)
+	//p2phst.RemoveHandler(gmsgType)
+	p2phst.RemoveGlobalHandler()
 	return nil
 }
 
@@ -448,8 +510,20 @@ func CreateSendMsgRet2(msg *C.char, size C.longlong, err *C.char) *C.sendmsgret 
 	return ptr
 }
 
+func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
+	maddrs := make([]ma.Multiaddr, len(addrs))
+	for k, addr := range addrs {
+		maddr, err := ma.NewMultiaddr(addr)
+		if err != nil {
+			return maddrs, err
+		}
+		maddrs[k] = maddr
+	}
+	return maddrs, nil
+}
+
 func main() {
 	//分别在不同进程启动cstart和sstart方法来模拟服务端和客户端
-	C.cstart()
+	//C.sstart()
 	//C.cstart()
 }

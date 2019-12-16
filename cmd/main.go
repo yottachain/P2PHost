@@ -1,19 +1,26 @@
 package main
 
+import "C"
 import (
 	"context"
 	"fmt"
+	"github.com/graydream/YTHost/option"
+	"github.com/multiformats/go-multiaddr"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"time"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	base58 "github.com/mr-tron/base58"
 
-	host "github.com/yottachain/P2PHost"
+	//host "github.com/yottachain/P2PHost"
+	host "github.com/graydream/YTHost"
+	p2ph "github.com/P2PHost"
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc"
 
-	pb "github.com/yottachain/P2PHost/pb"
+	pb "github.com/P2PHost/pb"
 )
 
 const P2PHOST_ETCD_PREFIX = "/p2phost/"
@@ -64,6 +71,7 @@ func main() {
 			log.Printf("get %s failed, err: %s\n", P2PHOST_PRIVKEY, err)
 			continue
 		}
+
 		if len(resp.Kvs) == 0 {
 			log.Printf("get %s failed, no content\n", P2PHOST_PRIVKEY)
 			continue
@@ -88,18 +96,36 @@ func main() {
 		}
 		log.Printf("Read P2P port from ETCD: %d\n", p2pPort)
 
-		h, err := host.NewHost(string(p2pPrivkey), fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort))
+
+		//h, err := host.NewHost(string(p2pPrivkey), fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort))
+		privbytes, err := base58.Decode(string(p2pPrivkey))
+		if err != nil {
+			log.Printf("bad format of private key,Base58 format needed\n")
+		}
+		pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+		ma, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort))
+		h, err := host.NewHost(option.ListenAddr(ma), option.Identity(pk))
 		if err != nil {
 			log.Fatalf("create p2phost instance failed, err: %s\n", err)
 		}
 		log.Printf("create p2phost success, listening address is %s\n", fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort))
+		/*
 		h.ConfigCallback(callbackHostname, int32(callbackPort))
 		h.RegisterHandler(USER_MSG, nil)
 		h.RegisterHandler(BPNODE_MSG, nil)
 		h.RegisterHandler(NODE_MSG, nil)
+		*/
+		p2phcli, err := p2ph.NewHclient()
+		if err != nil {
+			log.Printf("create p2phost httpclient failed, err: %s\n", err)
+		}
+
+		h.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
+
+
 		log.Printf("configure callback handler successful.")
 
-		server := &host.Server{Host: h}
+		server := &p2ph.Server{Host: h, Hc: p2phcli}
 
 		p2pGRPCPortStr := os.Getenv("P2PHOST_GRPCPORT")
 		p2pGRPCPort, err := strconv.Atoi(p2pGRPCPortStr)
