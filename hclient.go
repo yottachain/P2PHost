@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Hclient interface {
@@ -114,6 +115,7 @@ func NewHclient()(*hc, error){
 			},
 			StrictMaxConcurrentStreams: false,
 		},
+		Timeout: 60*time.Second,
 	}
 
 	hcli.Callbackinit()
