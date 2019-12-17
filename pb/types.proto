@@ -42,7 +42,7 @@ message ConnectReq {
 // SendMsg request message
 message SendMsgReq {
     string id = 1;
-    string msgType = 2;
+    bytes msgid = 2;
     bytes msg = 3;
 }
 

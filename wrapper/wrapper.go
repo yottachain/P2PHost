@@ -202,11 +202,11 @@ import (
 	"time"
 	"unsafe"
 
-	p2ph "github.com/P2PHost"
 	hst "github.com/graydream/YTHost"
 	host "github.com/graydream/YTHost/hostInterface"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	ma "github.com/multiformats/go-multiaddr"
+	p2ph "github.com/yottachain/P2PHost"
 )
 
 var p2phst host.Host
@@ -524,6 +524,6 @@ func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 
 func main() {
 	//分别在不同进程启动cstart和sstart方法来模拟服务端和客户端
-	//C.sstart()
+	C.sstart()
 	//C.cstart()
 }

@@ -2,21 +2,21 @@ package server
 
 import "C"
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
+	host "github.com/graydream/YTHost"
+	hst "github.com/graydream/YTHost/hostInterface"
 	"github.com/graydream/YTHost/option"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
-	"strconv"
-
+	ma "github.com/multiformats/go-multiaddr"
+	pb "github.com/yottachain/P2PHost/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"github.com/libp2p/go-libp2p-core/peer"
-	hst "github.com/graydream/YTHost/hostInterface"
-	host "github.com/graydream/YTHost"
-	ma "github.com/multiformats/go-multiaddr"
-
-	pb "github.com/P2PHost/pb"
+	"strconv"
 )
 
 // Server implemented server API for P2PHostServer service.
@@ -25,32 +25,6 @@ type Server struct {
 	Hc	Hclient
 }
 
-func NewServer(port string, priKey string) (*Server, error){
-	srv := Server{}
-	pt, err := strconv.Atoi(port)
-	if err != nil {
-		return nil, err
-	}
-	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
-	privbytes, err := base58.Decode(priKey)
-	if err != nil {
-		return nil, err
-	}
-	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
-	if err != nil {
-		return nil, err
-	}
-
-	srv.Host, err = host.NewHost(option.ListenAddr(ma), option.Identity(pk))
-	if err != nil {
-		return nil, err
-	}
-	go srv.Host.Accept()
-
-	srv.Hc, err = NewHclient()
-
-	return &srv, nil
-}
 
 // ID implemented ID function of P2PHostServer
 func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, error) {
@@ -91,7 +65,14 @@ func (server *Server) DisConnect(ctx context.Context, req *pb.StringMsg) (*pb.Em
 
 // SendMsg implemented SendMsg function of P2PHostServer
 func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.SendMsgResp, error) {
-	bytes, err := server.Host.SendMsg(ctx, peer.ID(req.GetId()), 0x0, req.GetMsg())
+	msid := req.GetMsgid()[:2:2]
+	bytebuff := bytes.NewBuffer(msid)
+	var tmp uint16
+	err := binary.Read(bytebuff, binary.BigEndian, &tmp)
+
+	msgId := int32(tmp)
+
+	bytes, err := server.Host.SendMsg(ctx, peer.ID(req.GetId()), msgId, req.GetMsg())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -127,4 +108,31 @@ func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 		maddrs[k] = maddr
 	}
 	return maddrs, nil
+}
+
+func NewServer(port string, priKey string) (*Server, error){
+	srv := Server{}
+	pt, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
+	privbytes, err := base58.Decode(priKey)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+	if err != nil {
+		return nil, err
+	}
+
+	srv.Host, err = host.NewHost(option.ListenAddr(ma), option.Identity(pk))
+	if err != nil {
+		return nil, err
+	}
+	go srv.Host.Accept()
+
+	srv.Hc, err = NewHclient()
+
+	return &srv, nil
 }
