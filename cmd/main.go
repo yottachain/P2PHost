@@ -20,7 +20,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc"
 
-	pb "github.com/P2PHost/pb"
+	pb "github.com/yottachain/P2PHost/pb"
 )
 
 const P2PHOST_ETCD_PREFIX = "/p2phost/"

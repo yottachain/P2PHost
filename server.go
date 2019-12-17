@@ -3,11 +3,17 @@ package server
 import "C"
 import (
 	"context"
+	"fmt"
+	"github.com/graydream/YTHost/option"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/mr-tron/base58"
+	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"github.com/libp2p/go-libp2p-core/peer"
 	hst "github.com/graydream/YTHost/hostInterface"
+	host "github.com/graydream/YTHost"
 	ma "github.com/multiformats/go-multiaddr"
 
 	pb "github.com/P2PHost/pb"
@@ -17,6 +23,33 @@ import (
 type Server struct {
 	Host hst.Host
 	Hc	Hclient
+}
+
+func NewServer(port string, priKey string) (*Server, error){
+	srv := Server{}
+	pt, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
+	privbytes, err := base58.Decode(priKey)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+	if err != nil {
+		return nil, err
+	}
+
+	srv.Host, err = host.NewHost(option.ListenAddr(ma), option.Identity(pk))
+	if err != nil {
+		return nil, err
+	}
+	go srv.Host.Accept()
+
+	srv.Hc, err = NewHclient()
+
+	return &srv, nil
 }
 
 // ID implemented ID function of P2PHostServer
