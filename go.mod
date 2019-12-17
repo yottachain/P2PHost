@@ -1,4 +1,4 @@
-module github.com/aurawing/cgotest
+module github.com/yottachain/P2PHost
 
 go 1.13
 
