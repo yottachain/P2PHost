@@ -8,6 +8,7 @@ import (
 	"fmt"
 	host "github.com/graydream/YTHost"
 	hst "github.com/graydream/YTHost/hostInterface"
+
 	"github.com/graydream/YTHost/option"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -22,9 +23,8 @@ import (
 // Server implemented server API for P2PHostServer service.
 type Server struct {
 	Host hst.Host
-	Hc	Hclient
+	Hc   Hclient
 }
-
 
 // ID implemented ID function of P2PHostServer
 func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, error) {
@@ -34,12 +34,12 @@ func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, err
 // Addrs implemented Addrs function of P2PHostServer
 func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListMsg, error) {
 	maddrs := server.Host.Addrs()
-	addrs := make([] string, len(maddrs))
+	addrs := make([]string, len(maddrs))
 	for k, madd := range maddrs {
 		addr := madd.String()
 		addrs[k] = addr
 	}
-	return &pb.StringListMsg{Values:addrs}, nil
+	return &pb.StringListMsg{Values: addrs}, nil
 }
 
 // Connect implemented Connect function of P2PHostServer
@@ -96,7 +96,6 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 	//server.Host.Close()
 	return &pb.Empty{}, nil
 }
-
 
 func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
