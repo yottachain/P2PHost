@@ -198,6 +198,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
 	_ "net/http/pprof"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 	"unsafe"
@@ -311,7 +313,19 @@ func ConnectWrp(nodeID *C.char, addrs **C.char, size C.int) *C.char {
 	nodeIdStr := C.GoString(nodeID)
 
 	maddrs, err := stringListToMaddrs(gaddrs)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+
+	conntimeout := os.Getenv(" P2PHOST_CONNECTTIMEOUT")
+	ct := 60
+	if conntimeout == "" {
+		ct = 60
+	}else {
+		ct, err = strconv.Atoi(conntimeout)
+		if err != nil {
+			ct = 60
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	defer cancel()
 	//p2pcli, err = p2phst.Connect(ctx, peer.ID(nodeIdStr), maddrs)
 	_, err = p2phst.ClientStore().Get(ctx, peer.ID(nodeIdStr), maddrs)
@@ -328,10 +342,10 @@ func DisconnectWrp(nodeID *C.char) *C.char {
 		return C.CString("p2phost has not started")
 	}
 
-	err := p2phst.ClientStore().Close(peer.ID(C.GoString(nodeID)))
-	if err != nil {
-		return C.CString(err.Error())
-	}
+	//err := p2phst.ClientStore().Close(peer.ID(C.GoString(nodeID)))
+	//if err != nil {
+	//	return C.CString(err.Error())
+	//}
 
 	return nil
 }
@@ -356,7 +370,18 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 	msgId := int32(tmp)
 
 	msgSlice := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
+	ct := 60
+	if conntimeout == "" {
+		ct = 60
+	}else {
+		ct, err = strconv.Atoi(conntimeout)
+		if err != nil {
+			ct = 60
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	defer cancel()
 	ret, err := p2phst.SendMsg(ctx, peer.ID(nodeIDStr), msgId, msgSlice)
 	//ret, err := p2phst.SendMsg(context.Background(), peer.ID(nodeIDStr), 0x11, msgSlice)
