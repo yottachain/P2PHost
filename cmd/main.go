@@ -4,7 +4,7 @@ import "C"
 import (
 	"context"
 	"fmt"
-	"github.com/graydream/YTHost/option"
+	"github.com/yottachain/YTHost/option"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	base58 "github.com/mr-tron/base58"
 	"github.com/multiformats/go-multiaddr"
@@ -15,7 +15,7 @@ import (
 	"time"
 
 	//host "github.com/yottachain/P2PHost"
-	host "github.com/graydream/YTHost"
+	host "github.com/yottachain/YTHost"
 	p2ph "github.com/yottachain/P2PHost"
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc"
