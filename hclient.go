@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/graydream/YTHost/service"
+	"github.com/yottachain/YTHost/service"
 	"github.com/mr-tron/base58"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/net/http2"

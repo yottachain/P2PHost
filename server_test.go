@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/graydream/YTHost/service"
+	"github.com/yottachain/YTHost/service"
 	"github.com/yottachain/P2PHost/pb"
 	"log"
 	"testing"
