@@ -45,9 +45,13 @@ func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListM
 // Connect implemented Connect function of P2PHostServer
 func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empty, error) {
 	maddrs, _ := stringListToMaddrs(req.GetAddrs())
-	ID := peer.ID(req.GetId())
+	ID, err := peer.Decode(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
 	//_, err := server.Host.Connect(ctx, ID, maddrs)
-	_, err := server.Host.ClientStore().Get(ctx, ID, maddrs)
+	_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -72,7 +76,12 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 
 	msgId := int32(tmp)
 
-	bytes, err := server.Host.SendMsg(ctx, peer.ID(req.GetId()), msgId, req.GetMsg())
+	ID, err := peer.Decode(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/yottachain/YTHost/service"
 	"github.com/yottachain/P2PHost/pb"
+	"github.com/yottachain/YTHost/service"
 	"log"
 	"testing"
 )
@@ -36,7 +36,7 @@ func TestConnSend(t *testing.T){
 	}
 
 	connReq := pb.ConnectReq {
-		Id: srv.Host.Config().ID.String(),
+		Id: *proto.String(srv.Host.Config().ID.String()),
 		Addrs: addrs,
 	}
 	_, err = srv1.Connect(context.Background(), &connReq)
@@ -55,9 +55,13 @@ func TestConnSend(t *testing.T){
 
 	sendMsg := pb.SendMsgReq{
 		Id: *proto.String(srv.Host.Config().ID.String()),
+		//Id: srv.Host.Config().ID.String(),
 		Msgid: buffer,
 		Msg: []byte("dasfasdkfdas"),
 	}
 
-	srv1.SendMsg(context.Background(), &sendMsg)
+	resp, err := srv1.SendMsg(context.Background(), &sendMsg)
+	if err == nil {
+		fmt.Println(string(resp.Value))
+	}
 }

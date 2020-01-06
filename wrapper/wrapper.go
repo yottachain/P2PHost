@@ -172,8 +172,8 @@ static void cstart() {
 
 	char data[12] = {'s','e','n','d',' ','m','e','s','s','a','g','e'};
 	char msid[2] ;
-	msid[0] = 1;
-	msid[1] = 1;
+	msid[0] = 0;
+	msid[1] = 0;
 	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
@@ -194,9 +194,9 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"github.com/yottachain/YTHost/option"
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
+	"github.com/yottachain/YTHost/option"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
@@ -204,11 +204,11 @@ import (
 	"time"
 	"unsafe"
 
-	hst "github.com/yottachain/YTHost"
-	host "github.com/yottachain/YTHost/hostInterface"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	ma "github.com/multiformats/go-multiaddr"
 	p2ph "github.com/yottachain/P2PHost"
+	hst "github.com/yottachain/YTHost"
+	host "github.com/yottachain/YTHost/hostInterface"
 )
 
 var p2phst host.Host
@@ -310,7 +310,6 @@ func ConnectWrp(nodeID *C.char, addrs **C.char, size C.int) *C.char {
 	for i, s := range tmpslice {
 		gaddrs[i] = C.GoString(s)
 	}
-	nodeIdStr := C.GoString(nodeID)
 
 	maddrs, err := stringListToMaddrs(gaddrs)
 
@@ -325,11 +324,14 @@ func ConnectWrp(nodeID *C.char, addrs **C.char, size C.int) *C.char {
 		}
 	}
 
+	nodeIdStr := C.GoString(nodeID)
+	ID, err := peer.Decode(nodeIdStr)
+	if err != nil {
+		return C.CString(err.Error())
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	defer cancel()
-	//p2pcli, err = p2phst.Connect(ctx, peer.ID(nodeIdStr), maddrs)
-	_, err = p2phst.ClientStore().Get(ctx, peer.ID(nodeIdStr), maddrs)
-
+	_, err = p2phst.ClientStore().Get(ctx, ID, maddrs)
 	if err != nil {
 		return C.CString(err.Error())
 	}
@@ -361,7 +363,6 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 	}
 	nodeIDStr := C.GoString(nodeID)
 
-
 	msid := (*[2]byte)(unsafe.Pointer(msgid))[:2:2]
 	bytebuff := bytes.NewBuffer(msid)
 	var tmp uint16
@@ -383,8 +384,13 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	defer cancel()
-	ret, err := p2phst.SendMsg(ctx, peer.ID(nodeIDStr), msgId, msgSlice)
-	//ret, err := p2phst.SendMsg(context.Background(), peer.ID(nodeIDStr), 0x11, msgSlice)
+
+	ID, err := peer.Decode(nodeIDStr)
+	if err != nil {
+		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
+	}
+
+	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
@@ -401,14 +407,13 @@ func RegisterHandlerWrp(msgType *C.char, f unsafe.Pointer) *C.char {
 		return C.CString("p2phcli has not created")
 	}
 
-	/*
-	MessageHandler := func(requestData []byte, head service.Head) ([]byte, error){
+
+	/*MessageHandler := func(requestData []byte, head service.Head) ([]byte, error){
 		fmt.Println(string(requestData))
 		return []byte("ok!!!"), nil
-	}
-	*/
+	}*/
 
-	//p2phst.RegisterHandler(0x14, MessageHandler)
+	//p2phst.RegisterGlobalMsgHandler(MessageHandler)
 	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
 	return nil
 }
