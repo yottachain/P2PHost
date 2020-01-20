@@ -4,23 +4,22 @@ import "C"
 import (
 	"context"
 	"fmt"
-	"github.com/yottachain/YTHost/option"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	base58 "github.com/mr-tron/base58"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/yottachain/P2PHost/pb"
+	"github.com/yottachain/YTHost/option"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"time"
 
+	p2ph "github.com/yottachain/P2PHost"
 	//host "github.com/yottachain/P2PHost"
 	host "github.com/yottachain/YTHost"
-	p2ph "github.com/yottachain/P2PHost"
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc"
-
-	pb "github.com/yottachain/P2PHost/pb"
 )
 
 const P2PHOST_ETCD_PREFIX = "/p2phost/"

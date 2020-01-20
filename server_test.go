@@ -22,7 +22,7 @@ func TestConnSend(t *testing.T){
 		return []byte("111111111111"), nil
 	})
 
-	srv1, err := NewServer("6789", "5JhXaYtCgA7eW9HAq5LAPqJ3337xt68qnc9VRCumpv24D6pX1sL")
+	srv1, err := NewServer("0", "5JhXaYtCgA7eW9HAq5LAPqJ3337xt68qnc9VRCumpv24D6pX1sL")
 	if err != nil {
 		log.Println(err.Error())
 	}

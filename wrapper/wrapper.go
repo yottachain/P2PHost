@@ -81,7 +81,7 @@ static sendmsgret* msgprocessor(char* msgType, char* data, long long size, char*
 
 static void sstart() {
  	int port = 7999;
- 	char *privkey = "5JSgrkY3jawhV1yTj3HiGJ643TeDFJdbEV3JA2akMJA3LLZFxn1";
+ 	char *privkey = "16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw";
 	char *err = StartWrp(port, privkey);
 	if (err != NULL) {
 		printf("error: %s\n", err);
@@ -129,7 +129,7 @@ static void sstart() {
 
 static void cstart() {
 	int port = 9998;
- 	char *privkey = "5JhXaYtCgA7eW9HAq5LAPqJ2FQ7xt68qnc9VRCumpv24D6pX1sL";
+ 	char *privkey = "16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw";
 	char *err = StartWrp(port, privkey);
 	if (err != NULL) {
 		printf("error: %s\n", err);
@@ -162,7 +162,7 @@ static void cstart() {
 	FreeAddrsRet(retp2);
 
 	char *addrs[1] = {"/ip4/127.0.0.1/tcp/7999"};
-	err = ConnectWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", addrs, 1);
+	err = ConnectWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", addrs, 1);
 	if (err != NULL) {
 		printf("error: %s\n", err);
 		free(err);
@@ -174,7 +174,7 @@ static void cstart() {
 	char msid[2] ;
 	msid[0] = 0;
 	msid[1] = 0;
-	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmAvd2jETZcJL3pwqaRBU9UP6bhZLXRPqFNyiSVZRBftxJ", msid, data, 12);
+	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
 		FreeSendMsgRet(retp3);
@@ -344,10 +344,15 @@ func DisconnectWrp(nodeID *C.char) *C.char {
 		return C.CString("p2phost has not started")
 	}
 
-	//err := p2phst.ClientStore().Close(peer.ID(C.GoString(nodeID)))
-	//if err != nil {
-	//	return C.CString(err.Error())
-	//}
+	nodeIdStr := C.GoString(nodeID)
+	ID, err := peer.Decode(nodeIdStr)
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	err = p2phst.ClientStore().Close(ID)
+	if err != nil {
+		return C.CString(err.Error())
+	}
 
 	return nil
 }
@@ -370,7 +375,10 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 
 	msgId := int32(tmp)
 
-	msgSlice := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
+	c_msg := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
+	msgSlice := make([]byte, size)
+	copy(msgSlice, c_msg)
+
 	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
 	ct := 60
 	if conntimeout == "" {
