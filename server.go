@@ -60,7 +60,11 @@ func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empt
 
 // DisConnect implemented DisConnect function of P2PHostServer
 func (server *Server) DisConnect(ctx context.Context, req *pb.StringMsg) (*pb.Empty, error) {
-	err := server.Host.ClientStore().Close(peer.ID(req.GetValue()))
+	ID, err := peer.Decode(req.GetValue())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	err = server.Host.ClientStore().Close(ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
