@@ -161,8 +161,8 @@ static void cstart() {
 	}
 	FreeAddrsRet(retp2);
 
-	char *addrs[1] = {"/ip4/127.0.0.1/tcp/7999"};
-	err = ConnectWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", addrs, 1);
+	char *addrs[1] = {"/ip4/192.168.3.182/tcp/7999"};
+	err = ConnectWrp("16Uiu2HAmDK3SzSRtLUYnLukygpiPcGTJ4gGiE4hD3NHao5mJ5cX2", addrs, 1);
 	if (err != NULL) {
 		printf("error: %s\n", err);
 		free(err);
@@ -174,7 +174,7 @@ static void cstart() {
 	char msid[2] ;
 	msid[0] = 0;
 	msid[1] = 0;
-	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", msid, data, 12);
+	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmDK3SzSRtLUYnLukygpiPcGTJ4gGiE4hD3NHao5mJ5cX2", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
 		FreeSendMsgRet(retp3);
