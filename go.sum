@@ -50,6 +50,7 @@ github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
+github.com/godbus/dbus/v5 v5.0.3/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/gogo/protobuf v1.3.0/go.mod h1:SlYgWuQ5SjCEi6WLHjHCa1yvBfUnHcTbrrZtXPKa29o=
@@ -214,10 +215,8 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yottachain/YTCrypto v0.0.0-20191111140914-83c018a089b4 h1:jFJyNB8ZpUZaOCDX5F6Nxk8ZoM4/Iw1dvQErZz391Mo=
 github.com/yottachain/YTCrypto v0.0.0-20191111140914-83c018a089b4/go.mod h1:2CLNtrMlOhwaHYDzaBhvd0y8CPPlH5cqzgMAYMPHIqw=
-github.com/yottachain/YTHost v0.0.0-20200121055036-0043afdbd935/go.mod h1:EFRPQ+U0pChj7jg8kB3hUvDk6PTxfr5mZGcN0HCqmwE=
-github.com/yottachain/YTHost v0.0.0-20200130080643-908fcaca1139 h1:Az4iO9oBqA/7Ff2/3NeAKJGUOXO+17CVfpEbXZGfX1Q=
-github.com/yottachain/YTHost v0.0.0-20200130080643-908fcaca1139/go.mod h1:EFRPQ+U0pChj7jg8kB3hUvDk6PTxfr5mZGcN0HCqmwE=
-github.com/yottachain/YTHost v1.0.0/go.mod h1:MWnRgfCG25t+PSwJwQ/DgCbg11G+AsUVL98IIfrhou0=
+github.com/yottachain/YTHost v0.0.0-20200203041759-c5d7f894a9a2 h1:O+qU/guIYAmRxcbnbZZlE73I/L00oRX1JePEu9U4K3U=
+github.com/yottachain/YTHost v0.0.0-20200203041759-c5d7f894a9a2/go.mod h1:EFRPQ+U0pChj7jg8kB3hUvDk6PTxfr5mZGcN0HCqmwE=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v3.3.18+incompatible h1:5aomL5mqoKHxw6NG+oYgsowk8tU8aOalo2IdZxdWHkw=
