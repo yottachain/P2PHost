@@ -376,7 +376,8 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 	msgId := int32(tmp)
 
 	c_msg := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
-	msgSlice := make([]byte, size)
+	s := int64(size)
+	msgSlice := make([]byte, s)
 	copy(msgSlice, c_msg)
 
 	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
