@@ -197,6 +197,9 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
 	"github.com/yottachain/YTHost/option"
+	"io"
+	"io/ioutil"
+	"log"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
@@ -210,6 +213,37 @@ import (
 	hst "github.com/yottachain/YTHost"
 	host "github.com/yottachain/YTHost/hostInterface"
 )
+
+var (
+	Trace   *log.Logger // 记录所有日志
+	Info    *log.Logger // 重要的信息
+	Warning *log.Logger // 需要注意的信息
+	Error   *log.Logger // 非常严重的问题
+)
+
+func init() {
+	file, err := os.OpenFile("p2phostinfo.log",
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("Failed to open error log file:", err)
+	}
+
+	Trace = log.New(ioutil.Discard,
+		"TRACE: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+
+	Info = log.New(io.MultiWriter(file, os.Stderr),
+		"P2PHOST->INFO: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+
+	Warning = log.New(os.Stdout,
+		"WARNING: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+
+	Error = log.New(io.MultiWriter(file, os.Stderr),
+		"ERROR: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
+}
 
 var p2phst host.Host
 //var p2pcli *client.YTHostClient
@@ -399,7 +433,15 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
 
+	startTime := time.Now()
 	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
+	interval := time.Now().Sub(startTime).Milliseconds()
+	if err == nil {
+		Info.Printf("msg send [peerid:%s] [msgid:%d] [start time: %s] [handle time:%d ms]", ID.String(), msgId, startTime.String(), interval)
+	}else {
+		Info.Printf("ERROR--->msg send [peerid:%s] [msgid:%d] [start time: %d] [handle time:%d ms]", ID.String(), msgId, startTime, interval)
+	}
+
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
