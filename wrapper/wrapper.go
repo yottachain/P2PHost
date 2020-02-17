@@ -248,8 +248,8 @@ func init() {
 		log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-var reqId uint64
-var lck sync.Mutex
+//var reqId uint64
+//var lck sync.Mutex
 var p2phst host.Host
 //var p2pcli *client.YTHostClient
 var mu sync.Mutex
@@ -503,20 +503,20 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 	}
 
 
-	lck.Lock()
-	reqId++
-	rid := reqId
-	lck.Unlock()
-	startTime := time.Now()
-	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice, rid, msid)
-	interval := time.Now().Sub(startTime).Milliseconds()
-	if err == nil {
-		Info.Printf("msgid==%d send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-			rid, ID.String(), msgId, startTime.String(), interval)
-	}else {
-		Info.Printf("errormsgid==%d err:%s send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-			rid, err, ID.String(), msgId, startTime.String(), interval)
-	}
+	//lck.Lock()
+	//reqId++
+	//rid := reqId
+	//lck.Unlock()
+	//startTime := time.Now()
+	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
+	//interval := time.Now().Sub(startTime).Milliseconds()
+	//if err == nil {
+	//	Info.Printf("msgid==%d send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
+	//		rid, ID.String(), msgId, startTime.String(), interval)
+	//}else {
+	//	Info.Printf("errormsgid==%d err:%s send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
+	//		rid, err, ID.String(), msgId, startTime.String(), interval)
+	//}
 
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
