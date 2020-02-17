@@ -7,6 +7,10 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
+	"google.golang.org/grpc"
+	context "context"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -312,4 +316,336 @@ var fileDescriptor_d938547f84707355 = []byte{
 	0xde, 0x1f, 0x62, 0x9e, 0xfb, 0x32, 0x90, 0x07, 0x81, 0xca, 0x97, 0xc9, 0x72, 0xd8, 0x14, 0x1e,
 	0x96, 0x97, 0xb7, 0xd1, 0x43, 0x3d, 0xe9, 0x57, 0x47, 0x78, 0xfb, 0x1e, 0x00, 0x00, 0xff, 0xff,
 	0x23, 0xa3, 0xd5, 0xac, 0x93, 0x02, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// P2PHostClient is the client API for P2PHost service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type P2PHostClient interface {
+	ID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringMsg, error)
+	Addrs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringListMsg, error)
+	Connect(ctx context.Context, in *ConnectReq, opts ...grpc.CallOption) (*Empty, error)
+	DisConnect(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error)
+	SendMsg(ctx context.Context, in *SendMsgReq, opts ...grpc.CallOption) (*SendMsgResp, error)
+	RegisterHandler(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error)
+	UnregisterHandler(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error)
+	Close(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type p2PHostClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewP2PHostClient(cc *grpc.ClientConn) P2PHostClient {
+	return &p2PHostClient{cc}
+}
+
+func (c *p2PHostClient) ID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringMsg, error) {
+	out := new(StringMsg)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/ID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) Addrs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StringListMsg, error) {
+	out := new(StringListMsg)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/Addrs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) Connect(ctx context.Context, in *ConnectReq, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/Connect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) DisConnect(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/DisConnect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) SendMsg(ctx context.Context, in *SendMsgReq, opts ...grpc.CallOption) (*SendMsgResp, error) {
+	out := new(SendMsgResp)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/SendMsg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) RegisterHandler(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/RegisterHandler", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) UnregisterHandler(ctx context.Context, in *StringMsg, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/UnregisterHandler", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *p2PHostClient) Close(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/pb.P2PHost/Close", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// P2PHostServer is the server API for P2PHost service.
+type P2PHostServer interface {
+	ID(context.Context, *Empty) (*StringMsg, error)
+	Addrs(context.Context, *Empty) (*StringListMsg, error)
+	Connect(context.Context, *ConnectReq) (*Empty, error)
+	DisConnect(context.Context, *StringMsg) (*Empty, error)
+	SendMsg(context.Context, *SendMsgReq) (*SendMsgResp, error)
+	RegisterHandler(context.Context, *StringMsg) (*Empty, error)
+	UnregisterHandler(context.Context, *StringMsg) (*Empty, error)
+	Close(context.Context, *Empty) (*Empty, error)
+}
+
+// UnimplementedP2PHostServer can be embedded to have forward compatible implementations.
+type UnimplementedP2PHostServer struct {
+}
+
+func (*UnimplementedP2PHostServer) ID(ctx context.Context, req *Empty) (*StringMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ID not implemented")
+}
+func (*UnimplementedP2PHostServer) Addrs(ctx context.Context, req *Empty) (*StringListMsg, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Addrs not implemented")
+}
+func (*UnimplementedP2PHostServer) Connect(ctx context.Context, req *ConnectReq) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Connect not implemented")
+}
+func (*UnimplementedP2PHostServer) DisConnect(ctx context.Context, req *StringMsg) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DisConnect not implemented")
+}
+func (*UnimplementedP2PHostServer) SendMsg(ctx context.Context, req *SendMsgReq) (*SendMsgResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMsg not implemented")
+}
+func (*UnimplementedP2PHostServer) RegisterHandler(ctx context.Context, req *StringMsg) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterHandler not implemented")
+}
+func (*UnimplementedP2PHostServer) UnregisterHandler(ctx context.Context, req *StringMsg) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnregisterHandler not implemented")
+}
+func (*UnimplementedP2PHostServer) Close(ctx context.Context, req *Empty) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Close not implemented")
+}
+
+func RegisterP2PHostServer(s *grpc.Server, srv P2PHostServer) {
+	s.RegisterService(&_P2PHost_serviceDesc, srv)
+}
+
+func _P2PHost_ID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).ID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/ID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).ID(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_Addrs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).Addrs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/Addrs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).Addrs(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).Connect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/Connect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).Connect(ctx, req.(*ConnectReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_DisConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StringMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).DisConnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/DisConnect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).DisConnect(ctx, req.(*StringMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_SendMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendMsgReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).SendMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/SendMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).SendMsg(ctx, req.(*SendMsgReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_RegisterHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StringMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).RegisterHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/RegisterHandler",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).RegisterHandler(ctx, req.(*StringMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_UnregisterHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StringMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).UnregisterHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/UnregisterHandler",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).UnregisterHandler(ctx, req.(*StringMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _P2PHost_Close_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(P2PHostServer).Close(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.P2PHost/Close",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(P2PHostServer).Close(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _P2PHost_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.P2PHost",
+	HandlerType: (*P2PHostServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ID",
+			Handler:    _P2PHost_ID_Handler,
+		},
+		{
+			MethodName: "Addrs",
+			Handler:    _P2PHost_Addrs_Handler,
+		},
+		{
+			MethodName: "Connect",
+			Handler:    _P2PHost_Connect_Handler,
+		},
+		{
+			MethodName: "DisConnect",
+			Handler:    _P2PHost_DisConnect_Handler,
+		},
+		{
+			MethodName: "SendMsg",
+			Handler:    _P2PHost_SendMsg_Handler,
+		},
+		{
+			MethodName: "RegisterHandler",
+			Handler:    _P2PHost_RegisterHandler_Handler,
+		},
+		{
+			MethodName: "UnregisterHandler",
+			Handler:    _P2PHost_UnregisterHandler_Handler,
+		},
+		{
+			MethodName: "Close",
+			Handler:    _P2PHost_Close_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "types.proto",
 }

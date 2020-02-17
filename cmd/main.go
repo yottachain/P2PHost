@@ -108,12 +108,12 @@ func main() {
 			log.Fatalf("create p2phost instance failed, err: %s\n", err)
 		}
 		log.Printf("create p2phost success, listening address is %s\n", fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", p2pPort))
-		/*
-		h.ConfigCallback(callbackHostname, int32(callbackPort))
+
+		/*h.ConfigCallback(callbackHostname, int32(callbackPort))
 		h.RegisterHandler(USER_MSG, nil)
 		h.RegisterHandler(BPNODE_MSG, nil)
-		h.RegisterHandler(NODE_MSG, nil)
-		*/
+		h.RegisterHandler(NODE_MSG, nil)*/
+
 		p2phcli, err := p2ph.NewHclient()
 		if err != nil {
 			log.Printf("create p2phost httpclient failed, err: %s\n", err)

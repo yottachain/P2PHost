@@ -9,12 +9,12 @@ import (
 	host "github.com/yottachain/YTHost"
 	hst "github.com/yottachain/YTHost/hostInterface"
 
-	"github.com/yottachain/YTHost/option"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
 	pb "github.com/yottachain/P2PHost/pb"
+	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"strconv"
@@ -81,7 +81,7 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg(), 1, msid)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
