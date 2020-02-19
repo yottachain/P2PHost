@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/yottachain/P2PHost/pb"
+	"github.com/yottachain/YTHost/service"
 	"log"
 	"sync"
 	"testing"
@@ -17,12 +18,12 @@ func TestConnSend(t *testing.T){
 		log.Println(err.Error())
 	}
 
-	//srv.Host.RegisterGlobalMsgHandler(func(requestData []byte, head service.Head) (bytes []byte, e error) {
-	//	fmt.Println(fmt.Sprintf("msg is %s", string(requestData)))
-	//	return []byte("111111111111"), nil
-	//})
+	srv.Host.RegisterGlobalMsgHandler(func(requestData []byte, head service.Head) (bytes []byte, e error) {
+		fmt.Println(fmt.Sprintf("msg is %s", string(requestData)))
+		return []byte("111111111111"), nil
+	})
 
-	srv.Host.RegisterGlobalMsgHandler(srv.Hc.MessageHandler)
+	//srv.Host.RegisterGlobalMsgHandler(srv.Hc.MessageHandler)
 
 	srv1, err := NewServer("0", "5JhXaYtCgA7eW9HAq5LAPqJ3337xt68qnc9VRCumpv24D6pX1sL")
 	if err != nil {

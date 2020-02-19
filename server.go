@@ -29,6 +29,22 @@ type Server struct {
 }
 
 const GETTOKEN = 50311
+var ct int
+
+func init() {
+	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
+	ct = 60
+	if conntimeout == "" {
+		ct = 60
+	}else {
+		cto, err := strconv.Atoi(conntimeout)
+		if err != nil {
+			ct = 60
+		}else {
+			ct = cto
+		}
+	}
+}
 
 // ID implemented ID function of P2PHostServer
 func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, error) {
@@ -83,17 +99,6 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	ID, err := peer.Decode(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-
-	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
-	ct := 60
-	if conntimeout == "" {
-		ct = 60
-	}else {
-		ct, err = strconv.Atoi(conntimeout)
-		if err != nil {
-			ct = 60
-		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
