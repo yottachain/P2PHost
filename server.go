@@ -95,7 +95,7 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	err := binary.Read(bytebuff, binary.BigEndian, &tmp)
 
 	msgId := int32(tmp)
-
+	
 	ID, err := peer.Decode(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
