@@ -196,11 +196,10 @@ import (
 	"fmt"
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
+	//"github.com/prometheus/common/log"
+	lg "github.com/yottachain/P2PHost/log"
 	"github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
-	"io"
-	"io/ioutil"
-	"log"
 	"net"
 	_ "net/http/pprof"
 	"os"
@@ -216,37 +215,6 @@ import (
 	host "github.com/yottachain/YTHost/hostInterface"
 	"google.golang.org/grpc"
 )
-
-var (
-	Trace   *log.Logger // 记录所有日志
-	Info    *log.Logger // 重要的信息
-	Warning *log.Logger // 需要注意的信息
-	Error   *log.Logger // 非常严重的问题
-)
-
-func init() {
-	file, err := os.OpenFile("p2phostinfo.log",
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalln("Failed to open error log file:", err)
-	}
-
-	Trace = log.New(ioutil.Discard,
-		"TRACE: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	Info = log.New(file,
-		"P2PHOST->INFO: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	Warning = log.New(os.Stdout,
-		"WARNING: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-
-	Error = log.New(io.MultiWriter(file, os.Stderr),
-		"ERROR: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
-}
 
 //var reqId uint64
 //var lck sync.Mutex
@@ -289,7 +257,7 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 	go p2phst.Accept()
 
 	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
-	Info.Printf("configure callback handler successful.")
+	lg.Info.Printf("configure callback handler successful.")
 
 	server := &p2ph.Server{Host: p2phst, Hc: p2phcli}
 
@@ -300,19 +268,19 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 	}
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", p2pGRPCPort))
 	if err != nil {
-		Info.Fatalf("failed to listen GRPC port %d: %v", p2pGRPCPort, err)
+		lg.Info.Fatalf("failed to listen GRPC port %d: %v", p2pGRPCPort, err)
 		return C.CString(err.Error())
 	}
-	Info.Printf("GRPC address: 0.0.0.0:%d\n", p2pGRPCPort)
+	lg.Info.Printf("GRPC address: 0.0.0.0:%d\n", p2pGRPCPort)
 	grpcServer := grpc.NewServer()
 	pb.RegisterP2PHostServer(grpcServer, server)
 
 	go func(ser *grpc.Server) {
 		err = grpcServer.Serve(lis)
 		if err == nil {
-			Info.Printf("GRPC server started.")
+			lg.Info.Printf("GRPC server started.")
 		}else {
-			Info.Printf("GRPC server start fail.")
+			lg.Info.Printf("GRPC server start fail.")
 		}
 	}(grpcServer)
 
