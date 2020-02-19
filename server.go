@@ -8,6 +8,8 @@ import (
 	"fmt"
 	host "github.com/yottachain/YTHost"
 	hst "github.com/yottachain/YTHost/hostInterface"
+	"os"
+	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -25,6 +27,8 @@ type Server struct {
 	Host hst.Host
 	Hc   Hclient
 }
+
+const GETTOKEN = 50311
 
 // ID implemented ID function of P2PHostServer
 func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, error) {
@@ -80,6 +84,23 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+
+	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
+	ct := 60
+	if conntimeout == "" {
+		ct = 60
+	}else {
+		ct, err = strconv.Atoi(conntimeout)
+		if err != nil {
+			ct = 60
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
+	if msgId == GETTOKEN {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	}
+	defer cancel()
 
 	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
 	if err != nil {
