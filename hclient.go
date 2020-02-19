@@ -8,7 +8,6 @@ import (
 	"fmt"
 	rl "github.com/juju/ratelimit"
 	"github.com/mr-tron/base58"
-	lg "github.com/yottachain/P2PHost/log"
 	"github.com/yottachain/YTHost/service"
 	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/net/http2"
@@ -89,7 +88,7 @@ func (h *hc) GetClient()(http.Client){
 
 func (h *hc) MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
 	h.ratelimiter.Wait(1)
-	lg.Info.Printf("cru available %d\n", h.ratelimiter.Available())
+	//lg.Info.Printf("cru available %d\n", h.ratelimiter.Available())
 
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, int16(head.MsgId))
