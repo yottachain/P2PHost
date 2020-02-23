@@ -46,9 +46,6 @@ func init() {
 	}
 }
 
-
-//test--------
-
 // ID implemented ID function of P2PHostServer
 func (server *Server) ID(ctx context.Context, req *pb.Empty) (*pb.StringMsg, error) {
 	return &pb.StringMsg{Value: server.Host.Config().ID.String()}, nil
