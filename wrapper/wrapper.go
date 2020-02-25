@@ -161,8 +161,8 @@ static void cstart() {
 	}
 	FreeAddrsRet(retp2);
 
-	char *addrs[1] = {"/ip4/192.168.3.182/tcp/7999"};
-	err = ConnectWrp("16Uiu2HAmDK3SzSRtLUYnLukygpiPcGTJ4gGiE4hD3NHao5mJ5cX2", addrs, 1);
+	char *addrs[1] = {"/ip4/127.0.0.1/tcp/7999"};
+	err = ConnectWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", addrs, 1);
 	if (err != NULL) {
 		printf("error: %s\n", err);
 		free(err);
@@ -174,7 +174,7 @@ static void cstart() {
 	char msid[2] ;
 	msid[0] = 0;
 	msid[1] = 0;
-	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmDK3SzSRtLUYnLukygpiPcGTJ4gGiE4hD3NHao5mJ5cX2", msid, data, 12);
+	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
 		FreeSendMsgRet(retp3);
@@ -196,7 +196,11 @@ import (
 	"fmt"
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
+	//"github.com/prometheus/common/log"
+	lg "github.com/yottachain/P2PHost/log"
+	"github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
+	"net"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
@@ -209,8 +213,11 @@ import (
 	p2ph "github.com/yottachain/P2PHost"
 	hst "github.com/yottachain/YTHost"
 	host "github.com/yottachain/YTHost/hostInterface"
+	"google.golang.org/grpc"
 )
 
+//var reqId uint64
+//var lck sync.Mutex
 var p2phst host.Host
 //var p2pcli *client.YTHostClient
 var mu sync.Mutex
@@ -237,7 +244,70 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 		return C.CString("bad format of private key")
 	}
 
-	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.Identity(pk))
+	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.OpenPProf("0.0.0.0:10000"), option.Identity(pk))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+
+	p2phcli, err = p2ph.NewHclient()
+	if err != nil {
+		return C.CString(err.Error())
+	}
+
+	go p2phst.Accept()
+
+	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
+	lg.Info.Printf("configure callback handler successful.")
+
+	server := &p2ph.Server{Host: p2phst, Hc: p2phcli}
+
+	p2pGRPCPortStr := os.Getenv("P2PHOST_GRPCPORT")
+	p2pGRPCPort, err := strconv.Atoi(p2pGRPCPortStr)
+	if err != nil {
+		p2pGRPCPort = 11002
+	}
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", p2pGRPCPort))
+	if err != nil {
+		lg.Info.Fatalf("failed to listen GRPC port %d: %v", p2pGRPCPort, err)
+		return C.CString(err.Error())
+	}
+	lg.Info.Printf("GRPC address: 0.0.0.0:%d\n", p2pGRPCPort)
+	grpcServer := grpc.NewServer()
+	pb.RegisterP2PHostServer(grpcServer, server)
+
+	go func(ser *grpc.Server) {
+		err = grpcServer.Serve(lis)
+		if err == nil {
+			lg.Info.Printf("GRPC server started.")
+		}else {
+			lg.Info.Printf("GRPC server start fail.")
+		}
+	}(grpcServer)
+
+	return nil
+}
+
+/*func StartWrpBak(port C.int, privkey *C.char) *C.char {
+	mu.Lock()
+	defer mu.Unlock()
+	if p2phst != nil {
+		return C.CString("p2phost has started")
+	}
+
+	pt := int(port)
+	ma, _ := ma.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", pt))
+
+	pks := C.GoString(privkey)
+	privbytes, err := base58.Decode(pks)
+	if err != nil {
+		return C.CString("bad format of private key,Base58 format needed")
+	}
+	pk, err := crypto.UnmarshalSecp256k1PrivateKey(privbytes[1:33])
+	if err != nil {
+		return C.CString("bad format of private key")
+	}
+
+	p2phst, err = hst.NewHost(option.ListenAddr(ma), option.OpenPProf("0.0.0.0:10000") ,option.Identity(pk))
 	if err != nil {
 		return C.CString(err.Error())
 	}
@@ -250,7 +320,7 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 	go p2phst.Accept()
 
 	return nil
-}
+}*/
 
 //export IDWrp
 func IDWrp() *C.idret {
@@ -377,6 +447,7 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 
 	c_msg := (*[1 << 30]byte)(unsafe.Pointer(msg))[:int64(size):int64(size)]
 	s := int64(size)
+	//多了一次copy
 	msgSlice := make([]byte, s)
 	copy(msgSlice, c_msg)
 
@@ -399,7 +470,22 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
 
+
+	//lck.Lock()
+	//reqId++
+	//rid := reqId
+	//lck.Unlock()
+	//startTime := time.Now()
 	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
+	//interval := time.Now().Sub(startTime).Milliseconds()
+	//if err == nil {
+	//	Info.Printf("msgid==%d send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
+	//		rid, ID.String(), msgId, startTime.String(), interval)
+	//}else {
+	//	Info.Printf("errormsgid==%d err:%s send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
+	//		rid, err, ID.String(), msgId, startTime.String(), interval)
+	//}
+
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
@@ -420,9 +506,9 @@ func RegisterHandlerWrp(msgType *C.char, f unsafe.Pointer) *C.char {
 	/*MessageHandler := func(requestData []byte, head service.Head) ([]byte, error){
 		fmt.Println(string(requestData))
 		return []byte("ok!!!"), nil
-	}*/
+	}
 
-	//p2phst.RegisterGlobalMsgHandler(MessageHandler)
+	p2phst.RegisterGlobalMsgHandler(MessageHandler)*/
 	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
 	return nil
 }
@@ -563,6 +649,6 @@ func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 
 func main() {
 	//分别在不同进程启动cstart和sstart方法来模拟服务端和客户端
-	C.sstart()
-	//C.cstart()
+	//C.sstart()
+	C.cstart()
 }

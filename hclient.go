@@ -88,6 +88,7 @@ func (h *hc) GetClient()(http.Client){
 
 func (h *hc) MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
 	h.ratelimiter.Wait(1)
+	//lg.Info.Printf("cru available %d\n", h.ratelimiter.Available())
 
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, int16(head.MsgId))
