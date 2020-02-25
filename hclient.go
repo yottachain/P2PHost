@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	rl "github.com/juju/ratelimit"
 	"github.com/mr-tron/base58"
 	"github.com/yottachain/YTHost/service"
 	"golang.org/x/crypto/ripemd160"
@@ -33,12 +34,22 @@ type hc struct {
 	client       http.Client
 	callbackHost string
 	callbackPort int
+	ratelimiter  *rl.Bucket
 }
 
 var gcallbackHost string
 var gcallbackPort int
+var ratelimit int64
 
 func init() {
+	ratelimitstr := os.Getenv("P2PHOST_RATELIMIT")
+	rls, err := strconv.Atoi(ratelimitstr)
+	if err != nil {
+		ratelimit = 8000
+	} else {
+		ratelimit = int64(rls)
+	}
+
 	gcallbackHost = os.Getenv("P2PHOST_CALLBACKHOST")
 	if gcallbackHost == "" {
 		gcallbackHost = "127.0.0.1"
@@ -76,6 +87,8 @@ func (h *hc) GetClient()(http.Client){
 
 
 func (h *hc) MessageHandler(requestData []byte, head service.Head) ([]byte, error) {
+	h.ratelimiter.Wait(1)
+
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, int16(head.MsgId))
 	binary.Write(buf, binary.BigEndian, requestData)
@@ -117,6 +130,9 @@ func NewHclient()(*hc, error){
 		},
 		Timeout: 60*time.Second,
 	}
+
+	rratelimiter := rl.NewBucketWithRate(float64(ratelimit), ratelimit)
+	hcli.ratelimiter = rratelimiter
 
 	hcli.Callbackinit()
 
