@@ -32,14 +32,14 @@ const GETTOKEN = 50311
 var ct int
 
 func init() {
-	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
-	ct = 60
+	conntimeout := os.Getenv(" P2PHOST_GRPCCLI_TIMEOUT")
+	ct = 5000
 	if conntimeout == "" {
-		ct = 60
+		ct = 5000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 60
+			ct = 5000
 		}else {
 			ct = cto
 		}
@@ -106,7 +106,7 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
 	if msgId == GETTOKEN {
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
 	}
