@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
+	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
@@ -32,14 +33,14 @@ const GETTOKEN = 50311
 var ct int
 
 func init() {
-	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
-	ct = 60
+	conntimeout := os.Getenv(" P2PHOST_GRPCCLI_TIMEOUT")
+	ct = 5000
 	if conntimeout == "" {
-		ct = 60
+		ct = 5000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 60
+			ct = 5000
 		}else {
 			ct = cto
 		}
@@ -106,13 +107,21 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
 	if msgId == GETTOKEN {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*1000)
 	}
 	defer cancel()
 
+	tstart := time.Now()
 	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	interval := time.Now().Sub(tstart).Milliseconds()
+	if msgId == GETTOKEN {
+		lg.Info.Printf("grpc server send [get token] time:%d\n", interval)
+	}else {
+		lg.Info.Printf("grpc server send [not get token] time:%d\n", interval)
+	}
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

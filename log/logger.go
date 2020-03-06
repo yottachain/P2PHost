@@ -25,7 +25,7 @@ func init() {
 		"TRACE: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
-	Info = log.New(file,
+	Info = log.New(io.MultiWriter(file, os.Stderr),
 		"P2PHOST->INFO: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
