@@ -34,26 +34,26 @@ var ct int
 
 func init() {
 	writetimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
-	wt = 5000
+	wt = 15000
 	if writetimeout == "" {
-		wt = 5000
+		wt = 15000
 	}else {
 		wto, err := strconv.Atoi(writetimeout)
 		if err != nil {
-			wt = 5000
+			wt = 15000
 		}else {
 			wt = wto
 		}
 	}
 
 	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
-	ct = 15000
+	ct = 30000
 	if conntimeout == "" {
-		ct = 15000
+		ct = 30000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 15000
+			ct = 30000
 		}else {
 			ct = cto
 		}
