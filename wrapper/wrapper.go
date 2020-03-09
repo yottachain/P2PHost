@@ -383,7 +383,7 @@ func ConnectWrp(nodeID *C.char, addrs **C.char, size C.int) *C.char {
 
 	maddrs, err := stringListToMaddrs(gaddrs)
 
-	conntimeout := os.Getenv(" P2PHOST_CONNECTTIMEOUT")
+	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
 	ct := 60
 	if conntimeout == "" {
 		ct = 60
@@ -451,7 +451,7 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 	msgSlice := make([]byte, s)
 	copy(msgSlice, c_msg)
 
-	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
+	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
 	ct := 60
 	if conntimeout == "" {
 		ct = 60
