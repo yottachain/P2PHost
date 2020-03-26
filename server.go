@@ -47,13 +47,13 @@ func init() {
 	}
 
 	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
-	ct = 30000
+	ct = 25000
 	if conntimeout == "" {
-		ct = 30000
+		ct = 25000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 30000
+			ct = 25000
 		}else {
 			ct = cto
 		}
@@ -128,14 +128,7 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	}
 	defer cancel()
 
-	//tstart := time.Now()
 	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
-	//interval := time.Now().Sub(tstart).Milliseconds()
-	//if msgId == GETTOKEN {
-	//	lg.Info.Printf("grpc server send [get token] time:%d\n", interval)
-	//}else {
-	//	lg.Info.Printf("grpc server send [not get token] time:%d\n", interval)
-	//}
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
