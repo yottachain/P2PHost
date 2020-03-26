@@ -32,7 +32,7 @@ const GETTOKEN = 50311
 var ct int
 
 func init() {
-	conntimeout := os.Getenv(" P2PHOST_WRITETIMEOUT")
+	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
 	ct = 60
 	if conntimeout == "" {
 		ct = 60
