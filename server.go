@@ -29,17 +29,31 @@ type Server struct {
 }
 
 const GETTOKEN = 50311
+var wt int
 var ct int
 
 func init() {
-	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
-	ct = 60
+	writetimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
+	wt = 15000
+	if writetimeout == "" {
+		wt = 15000
+	}else {
+		wto, err := strconv.Atoi(writetimeout)
+		if err != nil {
+			wt = 15000
+		}else {
+			wt = wto
+		}
+	}
+
+	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
+	ct = 30000
 	if conntimeout == "" {
-		ct = 60
+		ct = 30000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 60
+			ct = 30000
 		}else {
 			ct = cto
 		}
@@ -70,7 +84,9 @@ func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empt
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	//_, err := server.Host.Connect(ctx, ID, maddrs)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
+	defer cancel()
+
 	_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -106,13 +122,21 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(wt))
 	if msgId == GETTOKEN {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*1000)
 	}
 	defer cancel()
 
+	//tstart := time.Now()
 	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	//interval := time.Now().Sub(tstart).Milliseconds()
+	//if msgId == GETTOKEN {
+	//	lg.Info.Printf("grpc server send [get token] time:%d\n", interval)
+	//}else {
+	//	lg.Info.Printf("grpc server send [not get token] time:%d\n", interval)
+	//}
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
