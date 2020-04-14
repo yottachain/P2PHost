@@ -216,10 +216,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-//var reqId uint64
-//var lck sync.Mutex
 var p2phst host.Host
-//var p2pcli *client.YTHostClient
 var mu sync.Mutex
 var p2phcli p2ph.Hclient
 
@@ -470,21 +467,7 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
 
-
-	//lck.Lock()
-	//reqId++
-	//rid := reqId
-	//lck.Unlock()
-	//startTime := time.Now()
 	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
-	//interval := time.Now().Sub(startTime).Milliseconds()
-	//if err == nil {
-	//	Info.Printf("msgid==%d send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-	//		rid, ID.String(), msgId, startTime.String(), interval)
-	//}else {
-	//	Info.Printf("errormsgid==%d err:%s send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-	//		rid, err, ID.String(), msgId, startTime.String(), interval)
-	//}
 
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
@@ -632,6 +615,30 @@ func CreateSendMsgRet2(msg *C.char, size C.longlong, err *C.char) *C.sendmsgret 
 	if err != nil {
 		(*ptr).error = err
 	}
+	return ptr
+}
+
+//export GetOptNodes
+func GetOptNodes(ids **C.char, size C.int) **C.char{
+	if p2phst == nil {
+		return C.CString("p2phost has not started")
+	}
+
+	length := int(size)
+	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(ids))[:length:length]
+	iids := make([]string, length)
+	for i, s := range tmpslice {
+		iids[i] = C.GoString(s)
+	}
+
+	oids := p2phst.Optmizer().Get2(iids...)
+	ptr := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(*C.char))*len(oids)))
+	C.memset(unsafe.Pointer(ptr), 0, C.size_t(unsafe.Sizeof(*C.char))*len(oids))
+
+	for i, s := range oids {
+		ptr[i] = C.CString(s)
+	}
+
 	return ptr
 }
 
