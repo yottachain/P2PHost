@@ -621,7 +621,7 @@ func CreateSendMsgRet2(msg *C.char, size C.longlong, err *C.char) *C.sendmsgret 
 //export GetOptNodes
 func GetOptNodes(ids **C.char, size C.int) **C.char{
 	if p2phst == nil {
-		return C.CString("p2phost has not started")
+		return nil
 	}
 
 	length := int(size)
