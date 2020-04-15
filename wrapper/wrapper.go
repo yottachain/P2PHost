@@ -618,29 +618,29 @@ func CreateSendMsgRet2(msg *C.char, size C.longlong, err *C.char) *C.sendmsgret 
 	return ptr
 }
 
-//export GetOptNodes
-func GetOptNodes(ids **C.char, size C.int) **C.char{
-	if p2phst == nil {
-		return nil
-	}
-
-	length := int(size)
-	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(ids))[:length:length]
-	iids := make([]string, length)
-	for i, s := range tmpslice {
-		iids[i] = C.GoString(s)
-	}
-
-	oids := p2phst.Optmizer().Get2(iids...)
-	ptr := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(*C.char))*len(oids)))
-	C.memset(unsafe.Pointer(ptr), 0, C.size_t(unsafe.Sizeof(*C.char))*len(oids))
-
-	for i, s := range oids {
-		ptr[i] = C.CString(s)
-	}
-
-	return ptr
-}
+////export GetOptNodes
+//func GetOptNodes(ids **C.char, size C.int) **C.char{
+//	if p2phst == nil {
+//		return nil
+//	}
+//
+//	length := int(size)
+//	tmpslice := (*[1 << 30]*C.char)(unsafe.Pointer(ids))[:length:length]
+//	iids := make([]string, length)
+//	for i, s := range tmpslice {
+//		iids[i] = C.GoString(s)
+//	}
+//
+//	oids := p2phst.Optmizer().Get2(iids...)
+//	ptr := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(*C.char))*len(oids)))
+//	C.memset(unsafe.Pointer(ptr), 0, C.size_t(unsafe.Sizeof(*C.char))*len(oids))
+//
+//	for i, s := range oids {
+//		ptr[i] = C.CString(s)
+//	}
+//
+//	return ptr
+//}
 
 func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
