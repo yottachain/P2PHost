@@ -321,11 +321,11 @@ var fileDescriptor_d938547f84707355 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // P2PHostClient is the client API for P2PHost service.
 //
@@ -343,10 +343,10 @@ type P2PHostClient interface {
 }
 
 type p2PHostClient struct {
-	cc grpc.ClientConnInterface
+	cc grpc.ClientConn
 }
 
-func NewP2PHostClient(cc grpc.ClientConnInterface) P2PHostClient {
+func NewP2PHostClient(cc grpc.ClientConn) P2PHostClient {
 	return &p2PHostClient{cc}
 }
 
