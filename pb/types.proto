@@ -17,6 +17,7 @@ service P2PHost {
     rpc RegisterHandler(StringMsg) returns (Empty) {}
     rpc UnregisterHandler(StringMsg) returns (Empty) {}
     rpc Close(Empty) returns (Empty) {}
+    rpc GetOptNodes(StringListMsg) returns (StringListMsg) {}
 }
 
 // empty message

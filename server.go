@@ -137,6 +137,13 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 	return &pb.Empty{}, nil
 }
 
+// GetOptNodes implemented GetOptNodes function of P2PHostServer
+func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*pb.StringListMsg, error) {
+	iids := req.GetValues()
+	oids := server.Host.Optmizer().Get2(iids...)
+	return &pb.StringListMsg{Values: oids}, nil
+}
+
 func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
 	for k, addr := range addrs {
