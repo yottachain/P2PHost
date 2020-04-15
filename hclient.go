@@ -121,6 +121,12 @@ func (h *hc) MessageHandler(requestData []byte, head service.Head) ([]byte, erro
 
 func NewHclient()(*hc, error){
 	hcli := new(hc)
+	p2pHcTimeoutStr := os.Getenv("P2PHOST_HCLIENT_TIMEOUT")
+	p2pHcTimeout, err := strconv.Atoi(p2pHcTimeoutStr)
+	if err != nil {
+		p2pHcTimeout = 90
+	}
+
 	hcli.client = http.Client{
 		Transport: &http2.Transport{
 			AllowHTTP: true,
@@ -129,7 +135,7 @@ func NewHclient()(*hc, error){
 			},
 			StrictMaxConcurrentStreams: false,
 		},
-		Timeout: 60*time.Second,
+		Timeout: time.Duration(p2pHcTimeout)*time.Second,
 	}
 
 	rratelimiter := rl.NewBucketWithRate(float64(ratelimit), ratelimit)
