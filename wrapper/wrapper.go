@@ -196,7 +196,7 @@ import (
 	"fmt"
 	"github.com/libp2p/go-libp2p-core/peer"
 	base58 "github.com/mr-tron/base58"
-	//"github.com/prometheus/common/log"
+	"github.com/prometheus/common/log"
 	lg "github.com/yottachain/P2PHost/log"
 	"github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
@@ -216,10 +216,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-//var reqId uint64
-//var lck sync.Mutex
 var p2phst host.Host
-//var p2pcli *client.YTHostClient
 var mu sync.Mutex
 var p2phcli p2ph.Hclient
 
@@ -647,8 +644,30 @@ func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 	return maddrs, nil
 }
 
+func GrpcTest(){
+	StartWrp(7999, C.CString("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw"))
+	conn, err := grpc.Dial("localhost:11002", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewP2PHostClient(conn)
+	addrs := make([]string, 1)
+	addrs[0] = "/ip4/127.0.0.1/tcp/7000"
+	connReq := pb.ConnectReq {
+		Id: "16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw",
+		Addrs: addrs,
+	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	_, err = c.Connect(ctx, &connReq)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
 func main() {
 	//分别在不同进程启动cstart和sstart方法来模拟服务端和客户端
 	//C.sstart()
-	C.cstart()
+	//C.cstart()
+	//GrpcTest()
 }
