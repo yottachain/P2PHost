@@ -140,7 +140,12 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 // GetOptNodes implemented GetOptNodes function of P2PHostServer
 func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*pb.StringListMsg, error) {
 	iids := req.GetValues()
-	oids := server.Host.Optmizer().Get2(iids...)
+	//oids := server.Host.Optmizer().Get2(iids...)
+	lenth := len(iids)/2
+	optn := float32(lenth)*(0.85)
+	randn := float32(lenth)*(0.15)
+
+	oids := server.Host.GetNodes(iids, int(optn), int(randn))
 	return &pb.StringListMsg{Values: oids}, nil
 }
 
