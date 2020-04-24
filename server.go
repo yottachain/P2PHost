@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
+	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
@@ -145,7 +146,10 @@ func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*
 	optn := float32(lenth)*(0.85)
 	randn := float32(lenth)*(0.15)
 
+	startTime := time.Now()
 	oids := server.Host.GetNodes(iids, int(optn), int(randn))
+	interval := time.Now().Sub(startTime).Milliseconds()
+	lg.Info.Printf("list lenth:%d----optnum:%d----randnum:%d\n getnodeTime:%d", len(oids), int(optn), int(randn), interval)
 	return &pb.StringListMsg{Values: oids}, nil
 }
 
