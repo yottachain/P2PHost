@@ -147,7 +147,7 @@ func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*
 	randn := float32(lenth)*(0.15)
 
 	startTime := time.Now()
-	lg.Info.Printf("-----------------------------------------------------\n")
+	lg.Info.Println("-----------------------------------------------------")
 	oids := server.Host.GetNodes(iids, int(optn), int(randn))
 	interval := time.Now().Sub(startTime).Milliseconds()
 	lg.Info.Printf("list lenth:%d----optnum:%d----randnum:%d\n getnodeTime:%d", len(oids), int(optn), int(randn), interval)
