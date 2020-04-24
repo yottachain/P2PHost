@@ -204,10 +204,10 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/x-cray/logrus-prefixed-formatter v0.5.2/go.mod h1:2duySbKsL6M18s5GU7VPsoEPHyzalCE06qoARUCeBBE=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-github.com/yottachain/NodeOptimization v0.0.0-20200422090703-df449a81e3df h1:7zt4RJJsMnE+xr0LZuQQJp0EEPUWtXg1j1LhCajQqR4=
-github.com/yottachain/NodeOptimization v0.0.0-20200422090703-df449a81e3df/go.mod h1:hvnBaYc8ry78c2ifyZfkRpLqEh0LjRUZgmFKUGERE14=
-github.com/yottachain/YTHost v1.0.2-0.20200424092754-41451a7b0baa h1:IJ6JhDQow3CnLmaC4sdOSBkAAoQ6PHncIVir7skpuRQ=
-github.com/yottachain/YTHost v1.0.2-0.20200424092754-41451a7b0baa/go.mod h1:Csycrbxgc39stGjuvt2Dg8mq4CUKbfMVwd0G4YdtI2M=
+github.com/yottachain/NodeOptimization v0.0.0-20200424105941-19726d850e89 h1:7Ls2imxHYiuIdMd0FelgHc+3BxvLK6ZKRAQ8Pq+CAaw=
+github.com/yottachain/NodeOptimization v0.0.0-20200424105941-19726d850e89/go.mod h1:hvnBaYc8ry78c2ifyZfkRpLqEh0LjRUZgmFKUGERE14=
+github.com/yottachain/YTHost v1.0.2-0.20200424110057-a096ff6cb29a h1:9V9TZIwPhcBr5gztnpJlbi7Nj99kSXKaacQ0pYCEoh8=
+github.com/yottachain/YTHost v1.0.2-0.20200424110057-a096ff6cb29a/go.mod h1:4Jo/vs2Y81G00ZsqSGCxq2TYmo8Z/0PE8kAAxd10Jq8=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v3.3.18+incompatible h1:5aomL5mqoKHxw6NG+oYgsowk8tU8aOalo2IdZxdWHkw=
