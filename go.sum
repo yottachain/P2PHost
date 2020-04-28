@@ -205,8 +205,8 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yottachain/NodeOptimization v0.0.0-20200428081842-55d04096e72b h1:SP7p+W8RS5vjMOn+PflQniK4nmJaD90eGCVrkzsTF3A=
 github.com/yottachain/NodeOptimization v0.0.0-20200428081842-55d04096e72b/go.mod h1:rqAJ8LgSGkEi/8H5QC6PzUtqe7et/j6xlQkCJPkh5d0=
-github.com/yottachain/YTHost v1.0.2-0.20200428082125-57269b34339d h1:BmlemDf6nDim78H6LROLMxDWlsHWraFDOBTka67LqSw=
-github.com/yottachain/YTHost v1.0.2-0.20200428082125-57269b34339d/go.mod h1:ETxT1I0ZZyO3F4k74vPT8R0Glxjpe8tyEWeQNTmurP8=
+github.com/yottachain/YTHost v1.0.2-0.20200428095331-80947efe3e66 h1:jKjQClwjlohILLU6uWAUiOxchTrnxTtnR7isKwN+nDw=
+github.com/yottachain/YTHost v1.0.2-0.20200428095331-80947efe3e66/go.mod h1:ETxT1I0ZZyO3F4k74vPT8R0Glxjpe8tyEWeQNTmurP8=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v3.3.18+incompatible h1:5aomL5mqoKHxw6NG+oYgsowk8tU8aOalo2IdZxdWHkw=
