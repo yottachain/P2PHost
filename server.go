@@ -142,7 +142,8 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*pb.StringListMsg, error) {
 	iids := req.GetValues()
 	//oids := server.Host.Optmizer().Get2(iids...)
-	lenth := len(iids)/2
+	//lenth := len(iids)/2
+	lenth := len(iids)
 	optn := float32(lenth)*(0.85)
 	randn := float32(lenth)*(0.15)
 
