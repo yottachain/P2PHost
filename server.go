@@ -17,6 +17,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
+	"github.com/yottachain/YTHost/clientPool"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,6 +28,7 @@ import (
 type Server struct {
 	Host hst.Host
 	Hc   Hclient
+	CliPool *clientPool.ClientPool
 }
 
 const GETTOKEN = 50311
@@ -65,18 +67,24 @@ func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListM
 
 // Connect implemented Connect function of P2PHostServer
 func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empty, error) {
-	maddrs, _ := stringListToMaddrs(req.GetAddrs())
-	ID, err := peer.Decode(req.GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-
-	//_, err := server.Host.Connect(ctx, ID, maddrs)
-	_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+	_, err := server.CliPool.Get(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return &pb.Empty{}, nil
+
+	//maddrs, _ := stringListToMaddrs(req.GetAddrs())
+	//ID, err := peer.Decode(req.GetId())
+	//if err != nil {
+	//	return nil, status.Errorf(codes.Internal, err.Error())
+	//}
+	//
+	////_, err := server.Host.Connect(ctx, ID, maddrs)
+	//_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+	//if err != nil {
+	//	return nil, status.Errorf(codes.Internal, err.Error())
+	//}
+	//return &pb.Empty{}, nil
 }
 
 // DisConnect implemented DisConnect function of P2PHostServer
@@ -102,10 +110,10 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 
 	msgId := int32(tmp)
 	
-	ID, err := peer.Decode(req.GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
+	//ID, err := peer.Decode(req.GetId())
+	//if err != nil {
+	//	return nil, status.Errorf(codes.Internal, err.Error())
+	//}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	if msgId == GETTOKEN {
@@ -113,7 +121,9 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	}
 	defer cancel()
 
-	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	clt, err := server.CliPool.Get(req.GetId())
+	bytes, err := clt.SendMsg(ctx, msgId, req.GetMsg())
+	//bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
