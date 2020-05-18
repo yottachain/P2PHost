@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
 	lg "github.com/yottachain/P2PHost/log"
