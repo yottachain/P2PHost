@@ -122,6 +122,9 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	defer cancel()
 
 	clt, err := server.CliPool.Get(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 	bytes, err := clt.SendMsg(ctx, msgId, req.GetMsg())
 	//bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
 	if err != nil {
