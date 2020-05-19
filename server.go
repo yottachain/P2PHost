@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"github.com/libp2p/go-libp2p-core/peer"
 	host "github.com/yottachain/YTHost"
 	hst "github.com/yottachain/YTHost/hostInterface"
 	"os"
@@ -32,6 +33,7 @@ type Server struct {
 
 const GETTOKEN = 50311
 var ct int
+var cm int
 
 func init() {
 	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
@@ -46,6 +48,21 @@ func init() {
 			ct = cto
 		}
 	}
+
+	connmode := os.Getenv("P2PHOST_CONN_MODE")
+	cm = 0
+	if connmode == "" {
+		cm = 0
+	}else {
+		cmc, err := strconv.Atoi(connmode)
+		if err != nil {
+			cm = 0
+		}else {
+			cm = cmc
+		}
+	}
+
+	lg.Info.Printf("p2phost connect mode is %d\n", cm)
 }
 
 // ID implemented ID function of P2PHostServer
@@ -66,38 +83,47 @@ func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListM
 
 // Connect implemented Connect function of P2PHostServer
 func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empty, error) {
-	_, err := server.CliPool.Get(req.GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+	if cm == 1 {
+		_, err := server.CliPool.Get(req.GetId())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
 	}
-	return &pb.Empty{}, nil
 
-	//maddrs, _ := stringListToMaddrs(req.GetAddrs())
-	//ID, err := peer.Decode(req.GetId())
-	//if err != nil {
-	//	return nil, status.Errorf(codes.Internal, err.Error())
-	//}
-	//
-	////_, err := server.Host.Connect(ctx, ID, maddrs)
-	//_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
-	//if err != nil {
-	//	return nil, status.Errorf(codes.Internal, err.Error())
-	//}
-	//return &pb.Empty{}, nil
+	if cm == 0 {
+		maddrs, _ := stringListToMaddrs(req.GetAddrs())
+		ID, err := peer.Decode(req.GetId())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+
+		_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+	}
+
+	return &pb.Empty{}, nil
 }
 
 // DisConnect implemented DisConnect function of P2PHostServer
 func (server *Server) DisConnect(ctx context.Context, req *pb.StringMsg) (*pb.Empty, error) {
-	server.CliPool.Close(req.GetValue())
-	//ID, err := peer.Decode(req.GetValue())
-	//if err != nil {
-	//	return nil, status.Errorf(codes.Internal, err.Error())
-	//}
-	//
-	//err = server.Host.ClientStore().Close(ID)
-	//if err != nil {
-	//	return nil, status.Errorf(codes.Internal, err.Error())
-	//}
+	if cm == 1 {
+		server.CliPool.Close(req.GetValue())
+	}
+
+	if cm == 0 {
+		ID, err := peer.Decode(req.GetValue())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+
+		err = server.Host.ClientStore().Close(ID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+	}
+
 	return &pb.Empty{}, nil
 }
 
@@ -109,11 +135,11 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	err := binary.Read(bytebuff, binary.BigEndian, &tmp)
 
 	msgId := int32(tmp)
-	
-	//ID, err := peer.Decode(req.GetId())
-	//if err != nil {
-	//	return nil, status.Errorf(codes.Internal, err.Error())
-	//}
+
+	ID, err := peer.Decode(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
 	if msgId == GETTOKEN {
@@ -121,14 +147,23 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	}
 	defer cancel()
 
-	clt, err := server.CliPool.Get(req.GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+	var bytes []byte
+	if cm == 1 {
+		clt, err := server.CliPool.Get(req.GetId())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+		bytes, err = clt.SendMsg(ctx, msgId, req.GetMsg())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
 	}
-	bytes, err := clt.SendMsg(ctx, msgId, req.GetMsg())
-	//bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+
+	if cm == 0 {
+		bytes, err = server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
 	}
 	return &pb.SendMsgResp{Value: bytes}, nil
 }
