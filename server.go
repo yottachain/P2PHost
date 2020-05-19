@@ -33,19 +33,33 @@ type Server struct {
 
 const GETTOKEN = 50311
 var ct int
+var wt int
 var cm int
 
 func init() {
-	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
-	ct = 60
+	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
+	ct = 5000
 	if conntimeout == "" {
-		ct = 60
+		ct = 5000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 60
+			ct = 5000
 		}else {
 			ct = cto
+		}
+	}
+
+	writetimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
+	wt = 5000
+	if writetimeout == "" {
+		wt = 5000
+	}else {
+		wto, err := strconv.Atoi(writetimeout)
+		if err != nil {
+			wt = 5000
+		}else {
+			wt = wto
 		}
 	}
 
@@ -83,6 +97,9 @@ func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListM
 
 // Connect implemented Connect function of P2PHostServer
 func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empty, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
+	defer cancel()
+
 	if cm == 1 {
 		_, err := server.CliPool.Get(req.GetId())
 		if err != nil {
@@ -141,9 +158,9 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(ct))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(wt))
 	if msgId == GETTOKEN {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*1000)
 	}
 	defer cancel()
 
