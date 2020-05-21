@@ -76,6 +76,8 @@ func init() {
 		}
 	}
 
+	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
+	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
 	lg.Info.Printf("p2phost connect mode is %d\n", cm)
 }
 
