@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
+	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
@@ -58,6 +59,9 @@ func init() {
 			wt = wto
 		}
 	}
+
+	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
+	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
 }
 
 // ID implemented ID function of P2PHostServer
