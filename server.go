@@ -30,18 +30,32 @@ type Server struct {
 
 const GETTOKEN = 50311
 var ct int
+var wt int
 
 func init() {
-	conntimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
-	ct = 60
+	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
+	ct = 5000
 	if conntimeout == "" {
-		ct = 60
+		ct = 5000
 	}else {
 		cto, err := strconv.Atoi(conntimeout)
 		if err != nil {
-			ct = 60
+			ct = 5000
 		}else {
 			ct = cto
+		}
+	}
+
+	writetimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
+	wt = 5000
+	if writetimeout == "" {
+		wt = 5000
+	}else {
+		wto, err := strconv.Atoi(writetimeout)
+		if err != nil {
+			wt = 5000
+		}else {
+			wt = wto
 		}
 	}
 }
