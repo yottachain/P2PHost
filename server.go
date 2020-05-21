@@ -32,6 +32,7 @@ type Server struct {
 const GETTOKEN = 50311
 var ct int
 var wt int
+var grpct int
 
 func init() {
 	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
@@ -60,8 +61,22 @@ func init() {
 		}
 	}
 
+	grpctimeout := os.Getenv("P2PHOST_GRPCCLI_TIMEOUT")
+	grpct = 0
+	if grpctimeout == "" {
+		grpct = 0
+	}else {
+		grpcto, err := strconv.Atoi(grpctimeout)
+		if err != nil {
+			grpct = 0
+		}else {
+			grpct = grpcto
+		}
+	}
+
 	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
 	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
+	lg.Info.Printf("P2PHOST_GRPCCLI_TIMEOUT=%d\n", grpct)
 }
 
 // ID implemented ID function of P2PHostServer
