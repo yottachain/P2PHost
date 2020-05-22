@@ -212,7 +212,6 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	p2ph "github.com/yottachain/P2PHost"
 	hst "github.com/yottachain/YTHost"
-	"github.com/yottachain/YTHost/clientPool"
 	host "github.com/yottachain/YTHost/hostInterface"
 	"google.golang.org/grpc"
 )
@@ -220,7 +219,7 @@ import (
 var p2phst host.Host
 var mu sync.Mutex
 var p2phcli p2ph.Hclient
-var CliPool *clientPool.ClientPool
+//var CliPool *clientPool.ClientPool
 
 //export StartWrp
 func StartWrp(port C.int, privkey *C.char) *C.char {
@@ -258,10 +257,10 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 	p2phst.RegisterGlobalMsgHandler(p2phcli.MessageHandler)
 	lg.Info.Printf("configure callback handler successful.")
 
-	nodelist := hst.GetACNodeList()
-	CliPool = clientPool.NewPool(p2phst, nodelist)
+	//nodelist := hst.GetACNodeList()
+	//CliPool = clientPool.NewPool(p2phst, nodelist)
 
-	server := &p2ph.Server{Host: p2phst, Hc: p2phcli, CliPool:CliPool}
+	server := &p2ph.Server{Host: p2phst, Hc: p2phcli, CliPool:nil}
 
 	p2pGRPCPortStr := os.Getenv("P2PHOST_GRPCPORT")
 	p2pGRPCPort, err := strconv.Atoi(p2pGRPCPortStr)
