@@ -172,6 +172,21 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 	return &pb.Empty{}, nil
 }
 
+// GetOptNodes implemented GetOptNodes function of P2PHostServer
+func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*pb.StringListMsg, error) {
+	iids := req.GetValues()
+	lenth := len(iids)/2
+	//optn := float32(lenth)*(0.85)
+	//randn := float32(lenth)*(0.15)
+
+	startTime := time.Now()
+	lg.Info.Println("-----------------------------------------------------")
+	oids := server.Host.ClientStore().GetOptNodes(iids, lenth)
+	interval := time.Now().Sub(startTime).Milliseconds()
+	lg.Info.Printf("list lenth:%d----get num:%d----getnodeTime:%d\n", len(oids), lenth, interval)
+	return &pb.StringListMsg{Values: oids}, nil
+}
+
 func stringListToMaddrs(addrs []string) ([]ma.Multiaddr, error) {
 	maddrs := make([]ma.Multiaddr, len(addrs))
 	for k, addr := range addrs {
