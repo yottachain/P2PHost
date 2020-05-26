@@ -33,6 +33,7 @@ const GETTOKEN = 50311
 var ct int
 var wt int
 var grpct int
+var optlen int
 
 func init() {
 	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
@@ -74,9 +75,23 @@ func init() {
 		}
 	}
 
+	optlength := os.Getenv("P2PHOST_GETOPT_LENGTH")
+	optlen = 250
+	if optlength == "" {
+		optlen = 250
+	}else {
+		optleni, err := strconv.Atoi(optlength)
+		if err != nil {
+			optlen = 250
+		}else {
+			optlen = optleni
+		}
+	}
+
 	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
 	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
 	lg.Info.Printf("P2PHOST_GRPCCLI_TIMEOUT=%d\n", grpct)
+	lg.Info.Printf("P2PHOST_GETOPT_LENGTH=%d\n", optlen)
 }
 
 // ID implemented ID function of P2PHostServer
@@ -175,15 +190,12 @@ func (server *Server) Close(ctx context.Context, req *pb.Empty) (*pb.Empty, erro
 // GetOptNodes implemented GetOptNodes function of P2PHostServer
 func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*pb.StringListMsg, error) {
 	iids := req.GetValues()
-	lenth := len(iids)/2
-	//optn := float32(lenth)*(0.85)
-	//randn := float32(lenth)*(0.15)
+	//lenth := len(iids)/2
 
 	startTime := time.Now()
-	lg.Info.Println("-----------------------------------------------------")
-	oids := server.Host.ClientStore().GetOptNodes(iids, lenth)
+	oids := server.Host.ClientStore().GetOptNodes(iids, optlen)
 	interval := time.Now().Sub(startTime).Milliseconds()
-	lg.Info.Printf("list lenth:%d----get num:%d----getnodeTime:%d\n", len(iids), lenth, interval)
+	lg.Info.Printf("list lenth:%d----get num:%d----getnodeTime:%d\n", len(iids), optlen, interval)
 	return &pb.StringListMsg{Values: oids}, nil
 }
 
