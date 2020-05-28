@@ -256,6 +256,7 @@ func StartWrp(port C.int, privkey *C.char) *C.char {
 	if err != nil {
 		return C.CString(err.Error())
 	}
+	go clim.Keep(time.Duration(5000)*time.Millisecond)
 
 	go p2phst.Accept()
 
