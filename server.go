@@ -17,6 +17,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
+	cliM "github.com/yottachain/YTHost/ClientManage"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,6 +28,7 @@ import (
 type Server struct {
 	Host hst.Host
 	Hc   Hclient
+	CliM *cliM.Manager
 }
 
 const GETTOKEN = 50311
@@ -121,7 +123,8 @@ func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empt
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+	//_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+	_, err = server.CliM.Get(ID, maddrs)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
