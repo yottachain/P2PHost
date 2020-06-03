@@ -196,10 +196,11 @@ func (server *Server) GetOptNodes(ctx context.Context, req *pb.StringListMsg) (*
 	//lenth := len(iids)/2
 
 	startTime := time.Now()
-	peerAddrs := server.CliM.GetOptNodes(optlen)
+	randNum := int(float32(3*optlen)/25)
+	peerAddrs := server.CliM.GetOptNodes(optlen, randNum)
 	oids := cliM.PA2ids(peerAddrs...)
 	interval := time.Now().Sub(startTime).Milliseconds()
-	lg.Info.Printf("list lenth:%d----get num:%d----out length:%d----getnodeTime:%d\n", len(iids), optlen, len(oids), interval)
+	lg.Info.Printf("list lenth:%d----opt num:%d----rand num:%d----out length:%d----getnodeTime:%d\n", len(iids), optlen, randNum, len(oids), interval)
 	return &pb.StringListMsg{Values: oids}, nil
 }
 
