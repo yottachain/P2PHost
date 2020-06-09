@@ -205,8 +205,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/x-cray/logrus-prefixed-formatter v0.5.2/go.mod h1:2duySbKsL6M18s5GU7VPsoEPHyzalCE06qoARUCeBBE=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-github.com/yottachain/YTHost v1.0.2-0.20200609110817-ee60a43b42dc h1:w7G29Ut9gIr7U9kWJivZXd/bUGg5UuS//4n6+yAKTqI=
-github.com/yottachain/YTHost v1.0.2-0.20200609110817-ee60a43b42dc/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
+github.com/yottachain/YTHost v1.0.2-0.20200609115751-30a5a7e18eb8 h1:6u7ixzDiiiQx5lshTJ/9zxxXu94Pc2UBir0SkJdtocE=
+github.com/yottachain/YTHost v1.0.2-0.20200609115751-30a5a7e18eb8/go.mod h1:PMIX6FcFzZ5xaexcI1ivumzoo9nblL2wZc5it/R3SeU=
 go.etcd.io/bbolt v1.3.3 h1:MUGmc65QhB3pIlaQ5bB4LwqSj6GIonVJXpZiaKNyaKk=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v3.3.18+incompatible h1:5aomL5mqoKHxw6NG+oYgsowk8tU8aOalo2IdZxdWHkw=
