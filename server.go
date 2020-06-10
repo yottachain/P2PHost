@@ -36,6 +36,7 @@ var ct int
 var wt int
 var grpct int
 var optlen int
+var cm int
 
 func init() {
 	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
@@ -90,10 +91,24 @@ func init() {
 		}
 	}
 
+	connmode := os.Getenv("P2PHOST_CONN_MODE")
+	cm = 0
+	if connmode == "" {
+		cm = 0
+	}else {
+		cmc, err := strconv.Atoi(connmode)
+		if err != nil {
+			cm = 0
+		}else {
+			cm = cmc
+		}
+	}
+
 	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
 	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
 	lg.Info.Printf("P2PHOST_GRPCCLI_TIMEOUT=%d\n", grpct)
 	lg.Info.Printf("P2PHOST_GETOPT_LENGTH=%d\n", optlen)
+	lg.Info.Printf("P2PHOST_CONN_MODE=%d\n", cm)
 }
 
 // ID implemented ID function of P2PHostServer
@@ -123,8 +138,12 @@ func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empt
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	//_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
-	_, err = server.CliM.Get(ID, maddrs)
+	if cm == 0 {
+		_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
+	}else {
+		_, err = server.CliM.Get(ID, maddrs)
+	}
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
