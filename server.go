@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	host "github.com/yottachain/YTHost"
-	hst "github.com/yottachain/YTHost/hostInterface"
+	hst "github.com/yottachain/YTHost/interface"
 	"os"
 	"time"
 
@@ -147,7 +147,10 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	}
 	defer cancel()
 
-	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	//bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	gaddr := req.GetAddr()
+	maAddr, _ := ma.NewMultiaddr(gaddr)
+	bytes, err := server.Host.SendMsgAuto(ctx, ID, msgId, maAddr, req.GetMsg())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

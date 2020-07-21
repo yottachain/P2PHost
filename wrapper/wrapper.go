@@ -32,7 +32,7 @@ extern idret* IDWrp();
 extern addrsret* AddrsWrp();
 extern char* CloseWrp();
 extern char* ConnectWrp(char *nodeID, char **addrs, int size);
-extern sendmsgret* SendMsgWrp(char *nodeID, char *msgid, char *msg, long long size);
+extern sendmsgret* SendMsgWrp(char *nodeID, char *addr, char *msgid, char *msg, long long size);
 extern char* RegisterHandlerWrp(char *msgType, void *handler);
 extern char* UnregisterHandlerWrp(char *msgType);
 extern void FreeString(void *ptr);
@@ -212,7 +212,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	p2ph "github.com/yottachain/P2PHost"
 	hst "github.com/yottachain/YTHost"
-	host "github.com/yottachain/YTHost/hostInterface"
+	host "github.com/yottachain/YTHost/interface"
 	"google.golang.org/grpc"
 )
 
@@ -425,7 +425,7 @@ func DisconnectWrp(nodeID *C.char) *C.char {
 }
 
 //export SendMsgWrp
-func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.sendmsgret {
+func SendMsgWrp(nodeID *C.char, addr *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.sendmsgret {
 	if p2phst == nil {
 		return CreateSendMsgRet(nil, 0, C.CString("p2phost has not started"))
 	}
@@ -467,21 +467,12 @@ func SendMsgWrp(nodeID *C.char, msgid *C.char, msg *C.char, size C.longlong) *C.
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
 	}
 
+	//get addrs
+	gaddr := C.GoString(addr)
+	maAddr, _ := ma.NewMultiaddr(gaddr)
 
-	//lck.Lock()
-	//reqId++
-	//rid := reqId
-	//lck.Unlock()
-	//startTime := time.Now()
-	ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
-	//interval := time.Now().Sub(startTime).Milliseconds()
-	//if err == nil {
-	//	Info.Printf("msgid==%d send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-	//		rid, ID.String(), msgId, startTime.String(), interval)
-	//}else {
-	//	Info.Printf("errormsgid==%d err:%s send [peerid:%s] [msgID:%d] [start time: %s] [handle time:%d ms]",
-	//		rid, err, ID.String(), msgId, startTime.String(), interval)
-	//}
+	//ret, err := p2phst.SendMsg(ctx, ID, msgId, msgSlice)
+	ret, err := p2phst.SendMsgAuto(ctx, ID, msgId, maAddr, msgSlice)
 
 	if err != nil {
 		return CreateSendMsgRet(nil, C.longlong(0), C.CString(err.Error()))
