@@ -174,7 +174,7 @@ static void cstart() {
 	char msid[2] ;
 	msid[0] = 0;
 	msid[1] = 0;
-	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", msid, data, 12);
+	sendmsgret* retp3 = SendMsgWrp("16Uiu2HAmPR1qWUmFLatKf8QmHtJ3fkQpjP4tSa99wYbWvcvkzwYw", "/ip4/127.0.0.1/tcp/7999", msid, data, 12);
 	if (retp3->error != NULL) {
 		printf("error: %s\n", retp3->error);
 		FreeSendMsgRet(retp3);
