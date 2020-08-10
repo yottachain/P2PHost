@@ -21,10 +21,11 @@ require (
 	github.com/mr-tron/base58 v1.1.3
 	github.com/multiformats/go-multiaddr v0.2.0
 	github.com/prometheus/client_golang v1.3.0 // indirect
+	github.com/prometheus/common v0.7.0
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	github.com/yottachain/YTHost v1.0.2-0.20200226042847-daa6072b6384
+	github.com/yottachain/YTHost v1.0.2-0.20200721085012-055ad8efd1bb
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.etcd.io/etcd v3.3.18+incompatible
 	go.uber.org/zap v1.13.0 // indirect

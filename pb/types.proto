@@ -42,8 +42,9 @@ message ConnectReq {
 // SendMsg request message
 message SendMsgReq {
     string id = 1;
-    bytes msgid = 2;
-    bytes msg = 3;
+    string addr = 2;
+    bytes msgid = 3;
+    bytes msg = 4;
 }
 
 // SendMsg response message

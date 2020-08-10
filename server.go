@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	host "github.com/yottachain/YTHost"
-	hst "github.com/yottachain/YTHost/hostInterface"
+	hst "github.com/yottachain/YTHost/interface"
 	"os"
 	"time"
 
@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
 	ma "github.com/multiformats/go-multiaddr"
+	lg "github.com/yottachain/P2PHost/log"
 	pb "github.com/yottachain/P2PHost/pb"
 	"github.com/yottachain/YTHost/option"
 	"google.golang.org/grpc/codes"
@@ -29,35 +30,53 @@ type Server struct {
 }
 
 const GETTOKEN = 50311
-var wt int
 var ct int
+var wt int
+var grpct int
 
 func init() {
+	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
+	ct = 5000
+	if conntimeout == "" {
+		ct = 5000
+	}else {
+		cto, err := strconv.Atoi(conntimeout)
+		if err != nil {
+			ct = 5000
+		}else {
+			ct = cto
+		}
+	}
+
 	writetimeout := os.Getenv("P2PHOST_WRITETIMEOUT")
-	wt = 15000
+	wt = 5000
 	if writetimeout == "" {
-		wt = 15000
+		wt = 5000
 	}else {
 		wto, err := strconv.Atoi(writetimeout)
 		if err != nil {
-			wt = 15000
+			wt = 5000
 		}else {
 			wt = wto
 		}
 	}
 
-	conntimeout := os.Getenv("P2PHOST_CONNECTTIMEOUT")
-	ct = 30000
-	if conntimeout == "" {
-		ct = 30000
+	grpctimeout := os.Getenv("P2PHOST_GRPCCLI_TIMEOUT")
+	grpct = 0
+	if grpctimeout == "" {
+		grpct = 0
 	}else {
-		cto, err := strconv.Atoi(conntimeout)
+		grpcto, err := strconv.Atoi(grpctimeout)
 		if err != nil {
-			ct = 30000
+			grpct = 0
 		}else {
-			ct = cto
+			grpct = grpcto
 		}
 	}
+
+	lg.Info.Printf("P2PHOST_CONNECTTIMEOUT=%d\n", ct)
+	lg.Info.Printf("P2PHOST_WRITETIMEOUT=%d\n", wt)
+	lg.Info.Printf("P2PHOST_GRPCCLI_TIMEOUT=%d\n", grpct)
 }
 
 // ID implemented ID function of P2PHostServer
@@ -78,14 +97,14 @@ func (server *Server) Addrs(ctx context.Context, req *pb.Empty) (*pb.StringListM
 
 // Connect implemented Connect function of P2PHostServer
 func (server *Server) Connect(ctx context.Context, req *pb.ConnectReq) (*pb.Empty, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
+	defer cancel()
+
 	maddrs, _ := stringListToMaddrs(req.GetAddrs())
 	ID, err := peer.Decode(req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(ct))
-	defer cancel()
 
 	_, err = server.Host.ClientStore().Get(ctx, ID, maddrs)
 	if err != nil {
@@ -128,15 +147,10 @@ func (server *Server) SendMsg(ctx context.Context, req *pb.SendMsgReq) (*pb.Send
 	}
 	defer cancel()
 
-	//tstart := time.Now()
-	bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
-	//interval := time.Now().Sub(tstart).Milliseconds()
-	//if msgId == GETTOKEN {
-	//	lg.Info.Printf("grpc server send [get token] time:%d\n", interval)
-	//}else {
-	//	lg.Info.Printf("grpc server send [not get token] time:%d\n", interval)
-	//}
-
+	//bytes, err := server.Host.SendMsg(ctx, ID, msgId, req.GetMsg())
+	gaddr := req.GetAddr()
+	maAddr, _ := ma.NewMultiaddr(gaddr)
+	bytes, err := server.Host.SendMsgAuto(ctx, ID, msgId, maAddr, req.GetMsg())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
