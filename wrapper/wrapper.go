@@ -212,7 +212,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	p2ph "github.com/yottachain/P2PHost"
 	hst "github.com/yottachain/YTHost"
-	host "github.com/yottachain/YTHost/hostInterface"
+	host "github.com/yottachain/YTHost/interface"
 	"google.golang.org/grpc"
 )
 

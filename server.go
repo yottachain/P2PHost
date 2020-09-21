@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	host "github.com/yottachain/YTHost"
-	hst "github.com/yottachain/YTHost/hostInterface"
+	hst "github.com/yottachain/YTHost/interface"
 	"os"
 	"time"
 
