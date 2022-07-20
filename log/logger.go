@@ -15,17 +15,12 @@ var (
 )
 
 func init() {
-	file, err := os.OpenFile("p2phostinfo.log",
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalln("Failed to open error log file:", err)
-	}
 
 	Trace = log.New(ioutil.Discard,
 		"TRACE: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
-	Info = log.New(file,
+	Info = log.New(os.Stdout,
 		"P2PHOST->INFO: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -33,7 +28,7 @@ func init() {
 		"WARNING: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
-	Error = log.New(io.MultiWriter(file, os.Stderr),
+	Error = log.New(io.MultiWriter(os.Stdout, os.Stderr),
 		"ERROR: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 }
